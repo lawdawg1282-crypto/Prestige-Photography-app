@@ -45,7 +45,7 @@
               <input type="text" class="doc-input-inline" style="width: 95%; font-weight: normal;" id="inv-desc-1" value="Standard Photography Coverage & Editing">
             </td>
             <td style="text-align: center;">
-              <input type="text" class="doc-input-inline" style="width: 80%; text-align: center;" value="1">
+              <input type="text" class="doc-input-inline" style="width: 80%; text-align: center;" id="inv-qty-1" value="1">
             </td>
             <td style="text-align: right;">
               $<input type="text" class="doc-input-inline" style="width: 70%; text-align: right;" value="20.00" id="inv-amt-1" oninput="calculateInvoiceTotals()">
@@ -56,7 +56,7 @@
               <input type="text" class="doc-input-inline" style="width: 95%; font-weight: normal;" id="inv-desc-2" placeholder="Add-on Service / Location Fee">
             </td>
             <td style="text-align: center;">
-              <input type="text" class="doc-input-inline" style="width: 80%; text-align: center;" value="0">
+              <input type="text" class="doc-input-inline" style="width: 80%; text-align: center;" id="inv-qty-2" value="0">
             </td>
             <td style="text-align: right;">
               $<input type="text" class="doc-input-inline" style="width: 70%; text-align: right;" value="0.00" id="inv-amt-2" oninput="calculateInvoiceTotals()">
@@ -104,7 +104,7 @@
           <tr>
             <td colspan="2">
               <strong>CLIENT AUTHORIZATION DETAILS:</strong><br><br>
-              <strong>Client Name:</strong> <input type="text" class="doc-input-inline" style="width: 70%;" placeholder="Full Name or Department Name"><br><br>
+              <strong>Client Name:</strong> <input type="text" class="doc-input-inline" style="width: 70%;" placeholder="Full Name or Department Name" id="rel-client-name"><br><br>
               <strong>Date of Release:</strong> <input type="date" class="doc-input-inline" style="width: 40%;" id="rel-date"><br><br>
               <strong>Delivered Gallery / Session ID:</strong> <input type="text" class="doc-input-inline" style="width: 50%;" placeholder="e.g. Shoot #1042">
             </td>
@@ -251,11 +251,12 @@
       document.getElementById('sidebar-drawer').classList.toggle('open');
     }
 
-    /* PACKAGE ESTIMATOR LOGIC */
+    /* PACKAGE ESTIMATOR LOGIC & AUTOMATIC INVOICE AUTOFILL */
     function calculatePackageTotal() {
       const radios = document.getElementsByName('pkg_tier');
       let basePrice = 20;
       let selectedName = "Standard Shoot";
+      let mainQty = "1";
 
       radios.forEach(r => {
         if (r.checked) {
@@ -264,11 +265,13 @@
             const count = parseInt(countInput.value) || 1;
             const sets = Math.ceil(count / 10);
             basePrice = sets * 75;
-            selectedName = `Automotive (${count} Cars)`;
+            selectedName = `Automotive Fleet Shoot (${count} Vehicles)`;
+            mainQty = `${count}`;
             document.getElementById('auto-counter-box').style.display = 'block';
           } else {
             basePrice = parseFloat(r.value);
-            selectedName = r.parentElement.querySelector('h4').innerText;
+            selectedName = r.parentElement.querySelector('h4').innerText + " Coverage";
+            mainQty = "1";
             document.getElementById('auto-counter-box').style.display = 'none';
           }
         }
@@ -276,16 +279,58 @@
 
       // Addons
       const extraLocs = parseInt(document.getElementById('extra-loc-count').value) || 0;
-      let addonPrice = extraLocs * 10;
-
+      let extraLocPrice = extraLocs * 10;
+      
+      let rushDelivery = false;
       document.querySelectorAll('.pkg-addon').forEach(chk => {
-        if (chk.checked) addonPrice += parseFloat(chk.value);
+        if (chk.checked) rushDelivery = true;
       });
 
-      const total = basePrice + addonPrice;
+      const total = basePrice + extraLocPrice + (rushDelivery ? 20 : 0);
       document.getElementById('pkg-total-val').innerText = total.toFixed(2);
       document.getElementById('stat-calc-total').innerText = `$${total.toFixed(2)}`;
       document.getElementById('stat-selected-name').innerText = selectedName;
+
+      // --- AUTOFILL INVOICE ENGINE ---
+      const invDesc1 = document.getElementById('inv-desc-1');
+      const invQty1 = document.getElementById('inv-qty-1');
+      const invAmt1 = document.getElementById('inv-amt-1');
+      
+      const invDesc2 = document.getElementById('inv-desc-2');
+      const invQty2 = document.getElementById('inv-qty-2');
+      const invAmt2 = document.getElementById('inv-amt-2');
+
+      if (invDesc1 && invAmt1 && invQty1) {
+        invDesc1.value = selectedName;
+        invQty1.value = mainQty;
+        invAmt1.value = basePrice.toFixed(2);
+      }
+
+      if (invDesc2 && invAmt2 && invQty2) {
+        let addOnDetails = [];
+        let addonSubtotal = 0;
+
+        if (extraLocs > 0) {
+          addOnDetails.push(`${extraLocs}x Extra Location Stop(s)`);
+          addonSubtotal += extraLocPrice;
+        }
+        if (rushDelivery) {
+          addOnDetails.push('Rush Gallery Delivery');
+          addonSubtotal += 20;
+        }
+
+        if (addOnDetails.length > 0) {
+          invDesc2.value = addOnDetails.join(' + ');
+          invQty2.value = '1';
+          invAmt2.value = addonSubtotal.toFixed(2);
+        } else {
+          invDesc2.value = '';
+          invQty2.value = '0';
+          invAmt2.value = '0.00';
+        }
+      }
+
+      calculateInvoiceTotals();
     }
 
     /* CALENDAR BOOKING SCHEDULER */
@@ -386,6 +431,12 @@
         date: date,
         time: time
       });
+
+      // Auto-populate client name on Invoice & Release forms
+      const invClient = document.getElementById('inv-client-name');
+      const relClient = document.getElementById('rel-client-name');
+      if (invClient && !invClient.value) invClient.value = client;
+      if (relClient && !relClient.value) relClient.value = client;
 
       saveData();
       renderCalendar();
@@ -542,7 +593,7 @@
       renderNotes();
     }
 
-    /* INVOICE LOGIC */
+    /* INVOICE CALCULATION LOGIC */
     function calculateInvoiceTotals() {
       const amt1 = parseFloat(document.getElementById('inv-amt-1').value) || 0;
       const amt2 = parseFloat(document.getElementById('inv-amt-2').value) || 0;
@@ -561,7 +612,6 @@
       if (!canvas) return;
       ctx = canvas.getContext('2d');
 
-      // Adjust pixel density scaling
       const rect = canvas.getBoundingClientRect();
       canvas.width = rect.width || 400;
       canvas.height = 120;
