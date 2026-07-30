@@ -923,7 +923,7 @@
 
   <script>
     /* GLOBAL STATE & STORAGE KEYS */
-    let currentPin = "1234";
+    let currentPin = "0814";
     let enteredPin = "";
     let appData = {
       notes: [],
@@ -952,12 +952,19 @@
     /* PERSISTENCE & LOCALSTORAGE */
     function loadStoredData() {
       const savedPin = localStorage.getItem('prestige_pin');
-      if (savedPin) currentPin = savedPin;
+      if (savedPin) {
+        currentPin = savedPin;
+      } else {
+        localStorage.setItem('prestige_pin', currentPin);
+      }
 
       const savedData = localStorage.getItem('prestige_app_data');
       if (savedData) {
         try {
           appData = JSON.parse(savedData);
+          if (!appData.notes) appData.notes = [];
+          if (!appData.events) appData.events = [];
+          if (!appData.galleries) appData.galleries = { "General": [] };
         } catch(e) { console.error("Error loading saved data", e); }
       }
     }
@@ -985,13 +992,16 @@
     function updatePinDots() {
       for (let i = 1; i <= 4; i++) {
         const dot = document.getElementById(`dot${i}`);
-        if (i <= enteredPin.length) dot.classList.add('active');
-        else dot.classList.remove('active');
+        if (dot) {
+          if (i <= enteredPin.length) dot.classList.add('active');
+          else dot.classList.remove('active');
+        }
       }
     }
 
     function verifyPin() {
-      if (enteredPin === currentPin) {
+      const activeStoredPin = localStorage.getItem('prestige_pin') || currentPin;
+      if (enteredPin === activeStoredPin) {
         document.getElementById('lock-screen').style.display = 'none';
         enteredPin = "";
         updatePinDots();
@@ -1007,8 +1017,9 @@
     }
 
     function triggerChangePin() {
+      const activeStoredPin = localStorage.getItem('prestige_pin') || currentPin;
       const oldPin = prompt("Enter Current PIN:");
-      if (oldPin === currentPin) {
+      if (oldPin === activeStoredPin) {
         const newPin = prompt("Enter New 4-Digit PIN:");
         if (newPin && newPin.length === 4 && !isNaN(newPin)) {
           currentPin = newPin;
@@ -1034,7 +1045,6 @@
         document.getElementById('sidebar-drawer').classList.remove('open');
       }
 
-      // Re-initialize signature canvas if switching to contract tab
       if (tabId === 'contract') {
         setTimeout(initSignatureCanvas, 50);
       }
@@ -1132,6 +1142,7 @@
     /* CALENDAR BOOKING SCHEDULER */
     function renderCalendar() {
       const calBody = document.getElementById('calendar-body');
+      if (!calBody) return;
       calBody.innerHTML = '';
 
       const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -1228,7 +1239,6 @@
         time: time
       });
 
-      // Auto-populate client name on Invoice & Release forms
       const invClient = document.getElementById('inv-client-name');
       const relClient = document.getElementById('rel-client-name');
       if (invClient && !invClient.value) invClient.value = client;
@@ -1278,6 +1288,7 @@
 
     function renderDirectories() {
       const container = document.getElementById('directory-badges-list');
+      if (!container) return;
       container.innerHTML = '';
 
       Object.keys(appData.galleries).forEach(dir => {
@@ -1295,6 +1306,7 @@
 
     function renderGallery() {
       const grid = document.getElementById('photo-grid-container');
+      if (!grid) return;
       grid.innerHTML = '';
       document.getElementById('active-dir-title').innerText = `Active Directory: ${activeDirectory}`;
 
@@ -1353,6 +1365,7 @@
     /* NOTES LOGIC */
     function renderNotes() {
       const container = document.getElementById('notes-container');
+      if (!container) return;
       container.innerHTML = '';
 
       if (!appData.notes || appData.notes.length === 0) {
@@ -1409,7 +1422,6 @@
       canvas = document.getElementById('sig-canvas');
       if (!canvas) return;
 
-      // Adjust pixel size to match container width when visible
       const rect = canvas.getBoundingClientRect();
       if (rect.width > 0) {
         canvas.width = rect.width;
@@ -1427,12 +1439,10 @@
       if (canvasInitialized) return;
       canvasInitialized = true;
 
-      // Mouse Listeners
       canvas.addEventListener('mousedown', startDrawing);
       canvas.addEventListener('mousemove', draw);
       window.addEventListener('mouseup', stopDrawing);
 
-      // Touch Listeners
       canvas.addEventListener('touchstart', (e) => {
         e.preventDefault();
         const touch = e.touches[0];
