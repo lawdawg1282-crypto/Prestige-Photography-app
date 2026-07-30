@@ -3,7 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Prestige Photography - Management Portal</title>
+  <title>Prestige Photography - Live Management Portal</title>
+  
+  <!-- FIREBASE COMPAT SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
+
   <style>
     :root {
       --bg-dark: #0a0c10;
@@ -213,10 +219,6 @@
       margin-bottom: 1.5rem;
     }
 
-    .section-header h1 {
-      font-size: 1.5rem;
-    }
-
     .grid-2 {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -417,7 +419,7 @@
       color: var(--danger);
     }
 
-    /* DOCUMENT SHEETS (INVOICE & CONTRACT) */
+    /* DOCUMENT SHEETS */
     .document-container {
       background: white;
       color: black;
@@ -496,7 +498,19 @@
       max-width: 400px;
     }
 
-    /* PRINT STYLES */
+    /* STATUS BADGE */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      padding: 4px 8px;
+      border-radius: 12px;
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--success);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
     @media print {
       sidebar, .section-header, .mobile-header, #lock-screen {
         display: none !important;
@@ -580,6 +594,9 @@
     <div class="brand">
       <h2>PRESTIGE</h2>
       <p>PHOTOGRAPHY PORTAL</p>
+      <div style="margin-top: 8px;">
+        <span class="status-badge">● Firebase Live Sync</span>
+      </div>
     </div>
 
     <ul class="nav-list">
@@ -592,9 +609,6 @@
     </ul>
 
     <div class="sidebar-footer">
-      <button class="sm-btn" onclick="exportDataBackup()">💾 Export Backup</button>
-      <button class="sm-btn" onclick="triggerRestoreUpload()">📂 Restore Backup</button>
-      <input type="file" id="restore-file-input" style="display: none;" accept=".json" onchange="importDataBackup(event)">
       <button class="sm-btn" onclick="triggerChangePin()">🔒 Change PIN Code</button>
       <button class="sm-btn" onclick="lockApp()" style="color: var(--danger);">🔒 Lock Session</button>
     </div>
@@ -736,7 +750,7 @@
     <div id="directory" class="content-section">
       <div class="section-header">
         <h1>Media Directory Manager</h1>
-        <button class="action-btn" onclick="triggerPhotoSelect()">📷 Upload Photos</button>
+        <button class="action-btn" id="upload-btn" onclick="triggerPhotoSelect()">📷 Upload Photos</button>
         <input type="file" id="file-upload-input" multiple accept="image/*" style="display:none;" onchange="handleFileUpload(event)">
       </div>
 
@@ -838,7 +852,7 @@
       </div>
     </div>
 
-    <!-- SECTION 6: PRINT RELEASE & SIGNATURE CONTRACT -->
+    <!-- SECTION 6: PRINT RELEASE FORM -->
     <div id="contract" class="content-section">
       <div class="section-header">
         <div>
@@ -922,8 +936,21 @@
   </div>
 
   <script>
-    /* GLOBAL STATE & STORAGE KEYS */
-    let currentPin = "0814";
+    /* 1. FIREBASE CONFIGURATION */
+    const firebaseConfig = {
+      apiKey: "AIzaSyBEmLZUiCyxh1KSCbwy59OdJjmGQwoeNFc",
+      authDomain: "prestige-app-10027.firebaseapp.com",
+      databaseURL: "https://prestige-app-10027-default-rtdb.firebaseio.com",
+      projectId: "prestige-app-10027",
+      storageBucket: "prestige-app-10027.firebasestorage.app"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const storage = firebase.storage();
+
+    /* 2. GLOBAL STATE */
+    let currentPin = "1234";
     let enteredPin = "";
     let appData = {
       notes: [],
@@ -934,46 +961,63 @@
     let calMonth = new Date().getMonth();
     let calYear = new Date().getFullYear();
 
-    /* INITIALIZATION */
+    /* 3. FIREBASE REAL-TIME LISTENERS */
     window.addEventListener('DOMContentLoaded', () => {
-      loadStoredData();
       calculatePackageTotal();
-      renderNotes();
-      renderDirectories();
-      renderGallery();
-      renderCalendar();
       
-      // Auto set current date on forms
       const today = new Date().toISOString().split('T')[0];
       if (document.getElementById('inv-date')) document.getElementById('inv-date').value = today;
       if (document.getElementById('rel-date')) document.getElementById('rel-date').value = today;
+
+      // Sync PIN
+      db.ref('pin').on('value', snapshot => {
+        if (snapshot.exists()) {
+          currentPin = snapshot.val();
+        } else {
+          db.ref('pin').set("1234");
+        }
+      });
+
+      // Sync Notes
+      db.ref('notes').on('value', snapshot => {
+        appData.notes = [];
+        if (snapshot.exists()) {
+          snapshot.forEach(child => {
+            appData.notes.push({ id: child.key, ...child.val() });
+          });
+        }
+        renderNotes();
+      });
+
+      // Sync Calendar Events
+      db.ref('events').on('value', snapshot => {
+        appData.events = [];
+        if (snapshot.exists()) {
+          snapshot.forEach(child => {
+            appData.events.push({ id: child.key, ...child.val() });
+          });
+        }
+        renderCalendar();
+      });
+
+      // Sync Media Galleries
+      db.ref('galleries').on('value', snapshot => {
+        appData.galleries = { "General": [] };
+        if (snapshot.exists()) {
+          snapshot.forEach(dirSnap => {
+            const dirName = dirSnap.key;
+            appData.galleries[dirName] = [];
+            dirSnap.forEach(imgSnap => {
+              appData.galleries[dirName].push({ id: imgSnap.key, ...imgSnap.val() });
+            });
+          });
+        }
+        renderDirectories();
+        renderGallery();
+      });
     });
 
-    /* PERSISTENCE & LOCALSTORAGE */
-    function loadStoredData() {
-      const savedPin = localStorage.getItem('prestige_pin');
-      if (savedPin) {
-        currentPin = savedPin;
-      } else {
-        localStorage.setItem('prestige_pin', currentPin);
-      }
-
-      const savedData = localStorage.getItem('prestige_app_data');
-      if (savedData) {
-        try {
-          appData = JSON.parse(savedData);
-          if (!appData.notes) appData.notes = [];
-          if (!appData.events) appData.events = [];
-          if (!appData.galleries) appData.galleries = { "General": [] };
-        } catch(e) { console.error("Error loading saved data", e); }
-      }
-    }
-
-    function saveData() {
-      localStorage.setItem('prestige_app_data', JSON.stringify(appData));
-    }
-
-    /* SECURITY LOCK & NUMPAD LOGIC */
+    /* SECURITY LOCK & NUMPAD */
     function enterDigit(digit) {
       if (enteredPin.length < 4) {
         enteredPin += digit;
@@ -1000,8 +1044,7 @@
     }
 
     function verifyPin() {
-      const activeStoredPin = localStorage.getItem('prestige_pin') || currentPin;
-      if (enteredPin === activeStoredPin) {
+      if (enteredPin === currentPin) {
         document.getElementById('lock-screen').style.display = 'none';
         enteredPin = "";
         updatePinDots();
@@ -1017,14 +1060,12 @@
     }
 
     function triggerChangePin() {
-      const activeStoredPin = localStorage.getItem('prestige_pin') || currentPin;
       const oldPin = prompt("Enter Current PIN:");
-      if (oldPin === activeStoredPin) {
+      if (oldPin === currentPin) {
         const newPin = prompt("Enter New 4-Digit PIN:");
         if (newPin && newPin.length === 4 && !isNaN(newPin)) {
-          currentPin = newPin;
-          localStorage.setItem('prestige_pin', newPin);
-          alert("PIN updated successfully!");
+          db.ref('pin').set(newPin);
+          alert("PIN code updated in Firebase!");
         } else {
           alert("Invalid PIN format. Must be 4 digits.");
         }
@@ -1033,7 +1074,7 @@
       }
     }
 
-    /* NAVIGATION CONTROLS */
+    /* NAVIGATION */
     function switchTab(tabId, btn) {
       document.querySelectorAll('.content-section').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
@@ -1054,7 +1095,7 @@
       document.getElementById('sidebar-drawer').classList.toggle('open');
     }
 
-    /* PACKAGE ESTIMATOR LOGIC & AUTOMATIC INVOICE AUTOFILL */
+    /* PACKAGE ESTIMATOR & INVOICE ENGINE */
     function calculatePackageTotal() {
       const radios = document.getElementsByName('pkg_tier');
       let basePrice = 20;
@@ -1083,7 +1124,6 @@
         }
       });
 
-      // Addons
       const extraLocs = parseInt(document.getElementById('extra-loc-count').value) || 0;
       let extraLocPrice = extraLocs * 10;
       
@@ -1097,7 +1137,6 @@
       document.getElementById('stat-calc-total').innerText = `$${total.toFixed(2)}`;
       document.getElementById('stat-selected-name').innerText = selectedName;
 
-      // AUTOFILL INVOICE ENGINE
       const invDesc1 = document.getElementById('inv-desc-1');
       const invQty1 = document.getElementById('inv-qty-1');
       const invAmt1 = document.getElementById('inv-amt-1');
@@ -1139,7 +1178,7 @@
       calculateInvoiceTotals();
     }
 
-    /* CALENDAR BOOKING SCHEDULER */
+    /* CALENDAR SCHEDULER */
     function renderCalendar() {
       const calBody = document.getElementById('calendar-body');
       if (!calBody) return;
@@ -1148,7 +1187,6 @@
       const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
       document.getElementById('cal-month-year').innerText = `${monthNames[calMonth]} ${calYear}`;
 
-      // Day headers
       const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
       days.forEach(d => {
         const h = document.createElement('div');
@@ -1231,9 +1269,7 @@
         return;
       }
 
-      if (!appData.events) appData.events = [];
-      appData.events.push({
-        id: Date.now().toString(),
+      db.ref('events').push({
         client: client,
         date: date,
         time: time
@@ -1244,18 +1280,14 @@
       if (invClient && !invClient.value) invClient.value = client;
       if (relClient && !relClient.value) relClient.value = client;
 
-      saveData();
-      renderCalendar();
       closeModal();
     }
 
     function deleteEvent(id) {
-      appData.events = appData.events.filter(e => e.id !== id);
-      saveData();
-      renderCalendar();
+      db.ref(`events/${id}`).remove();
     }
 
-    /* GALLERY & MEDIA DIRECTORY LOGIC */
+    /* FIREBASE CLOUD STORAGE & GALLERY */
     function triggerPhotoSelect() {
       document.getElementById('file-upload-input').click();
     }
@@ -1265,22 +1297,27 @@
       let dirName = document.getElementById('dir-client-input').value.trim();
       if (!dirName) dirName = activeDirectory || "General";
 
-      if (!appData.galleries[dirName]) {
-        appData.galleries[dirName] = [];
-      }
+      const uploadBtn = document.getElementById('upload-btn');
+      uploadBtn.innerText = "⏳ Uploading...";
+      uploadBtn.disabled = true;
 
       Array.from(files).forEach(file => {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          appData.galleries[dirName].push({
-            id: Date.now() + Math.random().toString(36).substr(2, 5),
-            src: e.target.result
+        const fileRef = storage.ref(`galleries/${dirName}/${Date.now()}_${file.name}`);
+        fileRef.put(file).then(snapshot => {
+          return snapshot.ref.getDownloadURL();
+        }).then(downloadURL => {
+          db.ref(`galleries/${dirName}`).push({
+            src: downloadURL,
+            storagePath: fileRef.fullPath
           });
-          saveData();
-          renderDirectories();
-          renderGallery();
-        };
-        reader.readAsDataURL(file);
+          uploadBtn.innerText = "📷 Upload Photos";
+          uploadBtn.disabled = false;
+        }).catch(err => {
+          console.error("Upload error:", err);
+          alert("Error uploading file to Firebase Storage.");
+          uploadBtn.innerText = "📷 Upload Photos";
+          uploadBtn.disabled = false;
+        });
       });
 
       document.getElementById('dir-client-input').value = '';
@@ -1323,19 +1360,19 @@
           <img src="${p.src}" alt="Photo">
           <div class="photo-actions">
             <button class="photo-btn" onclick="openLightbox('${p.src}')">View</button>
-            <button class="photo-btn delete-btn" onclick="deletePhoto('${p.id}')">Delete</button>
+            <button class="photo-btn delete-btn" onclick="deletePhoto('${p.id}', '${p.storagePath || ''}')">Delete</button>
           </div>
         `;
         grid.appendChild(card);
       });
     }
 
-    function deletePhoto(id) {
-      if (appData.galleries[activeDirectory]) {
-        appData.galleries[activeDirectory] = appData.galleries[activeDirectory].filter(p => p.id !== id);
-        saveData();
-        renderDirectories();
-        renderGallery();
+    function deletePhoto(id, storagePath) {
+      if (confirm("Delete this photo permanently from Firebase?")) {
+        db.ref(`galleries/${activeDirectory}/${id}`).remove();
+        if (storagePath) {
+          storage.ref(storagePath).delete().catch(err => console.log("Storage file clean warning", err));
+        }
       }
     }
 
@@ -1345,11 +1382,8 @@
         return;
       }
       if (confirm(`Are you sure you want to delete directory '${activeDirectory}' and all its photos?`)) {
-        delete appData.galleries[activeDirectory];
+        db.ref(`galleries/${activeDirectory}`).remove();
         activeDirectory = "General";
-        saveData();
-        renderDirectories();
-        renderGallery();
       }
     }
 
@@ -1362,7 +1396,7 @@
       document.getElementById('lightbox').style.display = 'none';
     }
 
-    /* NOTES LOGIC */
+    /* QUICK CLIENT NOTES */
     function renderNotes() {
       const container = document.getElementById('notes-container');
       if (!container) return;
@@ -1390,20 +1424,15 @@
       const text = input.value.trim();
       if (!text) return;
 
-      if (!appData.notes) appData.notes = [];
-      appData.notes.push({ id: Date.now().toString(), text: text });
+      db.ref('notes').push({ text: text });
       input.value = '';
-      saveData();
-      renderNotes();
     }
 
     function deleteClientNote(id) {
-      appData.notes = appData.notes.filter(n => n.id !== id);
-      saveData();
-      renderNotes();
+      db.ref(`notes/${id}`).remove();
     }
 
-    /* INVOICE CALCULATION LOGIC */
+    /* INVOICE CALCULATIONS */
     function calculateInvoiceTotals() {
       const amt1 = parseFloat(document.getElementById('inv-amt-1').value) || 0;
       const amt2 = parseFloat(document.getElementById('inv-amt-2').value) || 0;
@@ -1413,7 +1442,7 @@
       document.getElementById('inv-total').innerText = subtotal.toFixed(2);
     }
 
-    /* SIGNATURE CANVAS REPAIRED LOGIC */
+    /* SIGNATURE CANVAS LOGIC */
     let canvas, ctx;
     let isDrawing = false;
     let canvasInitialized = false;
@@ -1488,55 +1517,6 @@
       if (ctx && canvas) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
       }
-    }
-
-    /* BACKUP & RESTORE DATA CONTROLS */
-    function exportDataBackup() {
-      const exportObj = {
-        pin: currentPin,
-        data: appData
-      };
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj));
-      const downloadAnchor = document.createElement('a');
-      downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", `prestige_backup_${new Date().toISOString().split('T')[0]}.json`);
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      downloadAnchor.remove();
-    }
-
-    function triggerRestoreUpload() {
-      document.getElementById('restore-file-input').click();
-    }
-
-    function importDataBackup(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        try {
-          const imported = JSON.parse(e.target.result);
-          if (imported.data) {
-            appData = imported.data;
-            if (imported.pin) {
-              currentPin = imported.pin;
-              localStorage.setItem('prestige_pin', currentPin);
-            }
-            saveData();
-            renderNotes();
-            renderDirectories();
-            renderGallery();
-            renderCalendar();
-            alert('Backup data successfully restored!');
-          } else {
-            alert('Invalid backup file format.');
-          }
-        } catch(err) {
-          alert('Error parsing JSON backup file.');
-        }
-      };
-      reader.readAsText(file);
     }
   </script>
 </body>
