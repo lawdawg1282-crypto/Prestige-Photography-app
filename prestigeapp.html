@@ -1,0 +1,1289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Prestige Photography | Suite & Portal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #070a12;
+      --panel: #0f172a;
+      --panel-hover: #1e293b;
+      --panel-border: rgba(255, 255, 255, 0.08);
+      --accent: #38bdf8;
+      --accent-glow: rgba(56, 189, 248, 0.2);
+      --accent-gradient: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
+      --text-main: #f8fafc;
+      --text-sub: #94a3b8;
+      --danger: #ef4444;
+      --success: #10b981;
+      --sidebar-width: 280px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { background-color: var(--bg); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: row; overflow-x: hidden; }
+
+    /* PIN LOCK OVERLAY */
+    #lock-screen {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(7, 10, 18, 0.94); backdrop-filter: blur(16px);
+      z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px;
+    }
+
+    .pin-card {
+      background: var(--panel); border: 1px solid var(--panel-border);
+      padding: 32px 24px; border-radius: 24px; text-align: center; width: 100%; max-width: 340px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); animation: fadeIn 0.3s ease;
+    }
+    .pin-card h2 { margin-bottom: 6px; font-size: 1.4rem; font-weight: 700; }
+    .pin-card p { color: var(--text-sub); margin-bottom: 24px; font-size: 0.85rem; }
+
+    .pin-dots { display: flex; gap: 14px; justify-content: center; margin-bottom: 24px; }
+    .dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--panel-border); transition: all 0.2s; }
+    .dot.active { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 12px var(--accent); }
+
+    .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .num-btn {
+      background: rgba(255, 255, 255, 0.03); border: 1px solid var(--panel-border);
+      color: var(--text-main); font-size: 1.2rem; font-weight: 600; padding: 14px;
+      border-radius: 14px; cursor: pointer; transition: 0.2s;
+    }
+    .num-btn:active, .num-btn:hover { background: var(--accent-gradient); color: #000; border-color: transparent; }
+    .num-btn.clear { background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2); color: var(--danger); }
+
+    .change-pin-link {
+      margin-top: 18px; display: inline-block; color: var(--accent); font-size: 0.78rem;
+      cursor: pointer; text-decoration: none; font-weight: 600;
+    }
+
+    /* NAVIGATION SIDEBAR & RESPONSIVE NAV */
+    aside {
+      width: var(--sidebar-width); background: var(--panel); border-right: 1px solid var(--panel-border);
+      display: flex; flex-direction: column; padding: 28px 16px; flex-shrink: 0; transition: all 0.3s ease;
+      height: 100vh; position: sticky; top: 0; z-index: 100;
+    }
+
+    .brand { font-size: 1.05rem; font-weight: 800; color: var(--text-main); letter-spacing: 0.5px; margin-bottom: 30px; display: flex; align-items: center; gap: 10px; }
+    .brand-icon { width: 32px; height: 32px; background: var(--accent-gradient); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #000; font-weight: bold; flex-shrink: 0; }
+
+    .nav-list { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+    .nav-item {
+      background: transparent; border: none; color: var(--text-sub);
+      padding: 12px 14px; border-radius: 12px; font-size: 0.88rem; font-weight: 600;
+      text-align: left; cursor: pointer; transition: all 0.2s;
+      display: flex; align-items: center; gap: 12px; white-space: nowrap;
+    }
+    .nav-item:hover { background: rgba(255, 255, 255, 0.04); color: var(--text-main); }
+    .nav-item.active { background: var(--accent-gradient); color: #000; font-weight: 700; box-shadow: 0 4px 15px var(--accent-glow); }
+
+    /* BACKUP / SYNC ACTIONS SECTION IN SIDEBAR */
+    .sync-actions-box {
+      margin-top: auto; padding-top: 16px; border-top: 1px solid var(--panel-border); margin-bottom: 12px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .sync-btn {
+      background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.2);
+      color: var(--accent); padding: 10px; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 0.8rem;
+      transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; text-align: center;
+    }
+    .sync-btn:hover { background: var(--accent-gradient); color: #000; border-color: transparent; }
+
+    .lock-btn {
+      background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2);
+      color: var(--danger); padding: 12px; border-radius: 10px; cursor: pointer; font-weight: 600; transition: 0.2s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .lock-btn:hover { background: var(--danger); color: #fff; }
+
+    /* RESPONSIVE TOP NAV BAR FOR MOBILE/TABLET PORTRAIT */
+    .mobile-header {
+      display: none; width: 100%; background: var(--panel); border-bottom: 1px solid var(--panel-border);
+      padding: 14px 20px; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 150;
+    }
+    .menu-toggle-btn {
+      background: rgba(255,255,255,0.05); border: 1px solid var(--panel-border); color: var(--text-main);
+      padding: 8px 12px; border-radius: 8px; font-weight: 700; cursor: pointer;
+    }
+
+    /* MAIN WORKSPACE */
+    main { flex: 1; padding: 32px; min-width: 0; overflow-y: auto; background: radial-gradient(circle at top right, rgba(56, 189, 248, 0.03), transparent 40%); }
+
+    .content-section { display: none; animation: fadeIn 0.25s ease; max-width: 1200px; margin: 0 auto; }
+    .content-section.active { display: block; }
+
+    .section-header { margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 14px; }
+    .section-header h1 { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.5px; }
+    .section-header p { color: var(--text-sub); font-size: 0.88rem; margin-top: 4px; }
+
+    /* CARDS & GRID LAYOUTS */
+    .card { background: var(--panel); border: 1px solid var(--panel-border); padding: 20px; border-radius: 18px; margin-bottom: 20px; }
+
+    .grid-1 { display: grid; grid-template-columns: 1fr; gap: 16px; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+
+    .selectable-card {
+      background: rgba(255, 255, 255, 0.02); border: 1px solid var(--panel-border);
+      padding: 18px; border-radius: 14px; cursor: pointer; transition: all 0.2s; display: block; position: relative;
+    }
+    .selectable-card:hover { border-color: rgba(56, 189, 248, 0.4); transform: translateY(-2px); }
+    .selectable-card input[type="radio"] { position: absolute; top: 18px; right: 18px; accent-color: var(--accent); transform: scale(1.1); }
+    .selectable-card h4 { color: var(--text-main); font-size: 1rem; font-weight: 700; margin-bottom: 6px; }
+    .selectable-card p { color: var(--text-sub); font-size: 0.8rem; line-height: 1.4; }
+    .selectable-card .price { color: var(--accent); font-weight: 800; font-size: 1.25rem; margin-top: 10px; }
+
+    .stat-card { background: rgba(255, 255, 255, 0.02); border: 1px solid var(--panel-border); padding: 18px; border-radius: 14px; }
+    .stat-card .stat-title { color: var(--text-sub); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-card .stat-val { color: var(--accent); font-size: 1.5rem; font-weight: 800; margin-top: 4px; }
+
+    .auto-counter-container {
+      display: none; background: rgba(56, 189, 248, 0.04); border: 1px solid var(--accent-glow);
+      padding: 18px; border-radius: 14px; margin-top: 18px;
+    }
+
+    .field { margin-bottom: 16px; }
+    .field label { display: block; font-size: 0.82rem; color: var(--text-sub); margin-bottom: 6px; font-weight: 600; }
+    .field input, .field select, .field textarea {
+      width: 100%; padding: 12px 14px; background: #070a12; border: 1px solid var(--panel-border);
+      color: var(--text-main); border-radius: 10px; outline: none; transition: 0.2s; font-size: 0.9rem;
+    }
+    .field input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+
+    .action-btn {
+      background: var(--accent-gradient); color: #000; border: none; padding: 12px 20px;
+      border-radius: 10px; font-weight: 700; font-size: 0.88rem; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .action-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 20px var(--accent-glow); }
+
+    .total-bar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 18px 24px; background: rgba(56, 189, 248, 0.05); border: 1px solid var(--accent-glow);
+      border-radius: 14px; margin-top: 20px; flex-wrap: wrap; gap: 12px;
+    }
+    .total-price { font-size: 1.8rem; font-weight: 800; color: var(--accent); }
+
+    /* GALLERY & MEDIA DIRECTORY */
+    .gallery-upload-zone {
+      border: 2px dashed var(--panel-border); border-radius: 16px; padding: 30px 16px;
+      text-align: center; background: rgba(255, 255, 255, 0.01); transition: 0.2s; cursor: pointer;
+    }
+    .gallery-upload-zone:hover { border-color: var(--accent); background: rgba(56, 189, 248, 0.02); }
+    
+    .directory-badge {
+      display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.03);
+      border: 1px solid var(--panel-border); padding: 8px 14px; border-radius: 10px;
+      cursor: pointer; transition: 0.2s; font-weight: 600; font-size: 0.85rem; margin-right: 6px; margin-bottom: 8px;
+    }
+    .directory-badge:hover, .directory-badge.active { background: var(--accent-gradient); color: #000; border-color: transparent; font-weight: 700; }
+
+    .photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; margin-top: 16px; }
+    .photo-card {
+      position: relative; border-radius: 12px; overflow: hidden; height: 140px;
+      background: #000; border: 1px solid var(--panel-border); transition: 0.2s;
+    }
+    .photo-card img { width: 100%; height: 100%; object-fit: cover; transition: 0.3s; }
+    .photo-card:hover img { transform: scale(1.06); }
+    .photo-card .photo-actions {
+      position: absolute; bottom: 0; left: 0; right: 0; padding: 6px;
+      background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); display: flex;
+      justify-content: space-between; gap: 6px;
+    }
+    .photo-btn {
+      flex: 1; background: rgba(255,255,255,0.25); border: none; color: #fff; padding: 6px;
+      border-radius: 6px; cursor: pointer; font-size: 0.72rem; font-weight: 700; text-align: center; backdrop-filter: blur(4px);
+    }
+    .photo-btn:hover { background: var(--accent); color: #000; }
+    .photo-btn.delete-btn:hover { background: var(--danger); color: #fff; }
+
+    .lightbox-modal {
+      position: fixed; top:0; left:0; width:100vw; height:100vh;
+      background: rgba(0,0,0,0.92); z-index: 10000; display: none;
+      justify-content: center; align-items: center; flex-direction: column; padding: 20px;
+    }
+    .lightbox-modal img { max-width: 95%; max-height: 80vh; border-radius: 12px; box-shadow: 0 0 40px rgba(0,0,0,0.8); }
+
+    /* CALENDAR */
+    .cal-controls { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .cal-title { font-size: 1.15rem; font-weight: 800; color: var(--text-main); }
+    .cal-btn { background: var(--panel); border: 1px solid var(--panel-border); color: var(--text-main); padding: 8px 14px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; }
+
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: var(--panel-border); border-radius: 12px; overflow: hidden; }
+    .cal-day-header { background: var(--panel); padding: 10px 4px; text-align: center; font-weight: 700; color: var(--text-sub); font-size: 0.75rem; text-transform: uppercase; }
+    .cal-cell {
+      background: #0b1120; min-height: 95px; padding: 6px; cursor: pointer; transition: 0.2s;
+      display: flex; flex-direction: column; justify-content: flex-start;
+    }
+    .cal-cell:hover { background: rgba(56, 189, 248, 0.05); }
+    .cal-cell.empty { background: rgba(0,0,0,0.2); cursor: default; }
+    .cal-num { font-weight: 700; font-size: 0.8rem; color: var(--text-sub); margin-bottom: 4px; }
+
+    .event-tag {
+      background: var(--accent); color: #000; font-size: 0.68rem; font-weight: 700;
+      padding: 4px 6px; border-radius: 5px; margin-top: 3px; display: flex;
+      justify-content: space-between; align-items: center; gap: 4px; cursor: pointer; line-height: 1.2;
+    }
+    .event-del-btn { background: rgba(0,0,0,0.15); color: #000; border: none; border-radius: 3px; padding: 0 3px; font-weight: bold; cursor: pointer; }
+
+    /* MODAL */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.75); backdrop-filter: blur(8px);
+      z-index: 999; display: none; justify-content: center; align-items: center; padding: 20px;
+    }
+    .modal-box { background: var(--panel); border: 1px solid var(--panel-border); border-radius: 18px; padding: 24px; width: 100%; max-width: 420px; }
+
+    /* NOTES */
+    .note-item {
+      background: rgba(255,255,255,0.02); border: 1px solid var(--panel-border);
+      padding: 12px 16px; border-radius: 10px; margin-bottom: 8px;
+      display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    }
+
+    /* INVOICE & PRINT DOCUMENTS */
+    .document-container { 
+      background: #ffffff; 
+      color: #000000; 
+      padding: 28px; 
+      border-radius: 12px; 
+      max-width: 800px; 
+      margin: 0 auto; 
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4); 
+      overflow-x: auto; 
+      box-sizing: border-box;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+    .doc-table { 
+      width: 100%; 
+      border-collapse: collapse; 
+      margin-bottom: -1px; 
+      min-width: 500px; 
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+    .doc-table td, .doc-table th { border: 1.5px solid #000000; padding: 8px 12px; vertical-align: top; font-size: 0.85rem; color: #000000; }
+    .doc-logo-cell { width: 35%; text-align: center; vertical-align: middle !important; }
+    .doc-logo-title { font-weight: 900; font-size: 1.1rem; letter-spacing: 1px; margin-top: 4px; }
+    .doc-header-title { text-align: center; font-weight: 800; font-size: 1rem; }
+    .doc-input-inline { background: transparent; border: none; border-bottom: 1px solid #000; color: #000; font-weight: 600; width: 80%; padding: 2px 4px; outline: none; }
+    .doc-checkbox-group { display: flex; flex-direction: column; gap: 6px; }
+    .doc-checkbox-group label { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 0.82rem; color: #000; cursor: pointer; }
+    
+    canvas { width: 100%; height: 100px; background: #ffffff; border: 1px dashed #000000; border-radius: 4px; cursor: crosshair; touch-action: none; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* RESPONSIVE BREAKPOINTS */
+    @media screen and (max-width: 1199px) {
+      :root { --sidebar-width: 230px; }
+      .grid-4 { grid-template-columns: repeat(2, 1fr); }
+      .grid-3 { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media screen and (max-width: 991px) {
+      body { flex-direction: column; }
+      .mobile-header { display: flex; }
+      aside {
+        position: fixed; top: 61px; left: -100%; width: 280px; height: calc(100vh - 61px);
+        box-shadow: 10px 0 30px rgba(0,0,0,0.5); z-index: 140;
+      }
+      aside.open { left: 0; }
+      main { padding: 20px 16px; }
+      .grid-4, .grid-3, .grid-2 { grid-template-columns: repeat(2, 1fr); }
+      .cal-cell { min-height: 80px; padding: 4px; }
+      .event-tag { font-size: 0.62rem; padding: 2px 4px; }
+    }
+
+    @media screen and (max-width: 767px) {
+      .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; }
+      .cal-day-header { font-size: 0.65rem; padding: 6px 2px; }
+      .cal-cell { min-height: 65px; padding: 2px; }
+      .cal-num { font-size: 0.72rem; }
+      .event-tag { font-size: 0.58rem; flex-direction: column; align-items: flex-start; }
+      .section-header h1 { font-size: 1.35rem; }
+      .document-container { padding: 14px; }
+    }
+
+    /* PRINT ENGINE PREVIEW & SINGLE-PAGE FIXES */
+    @page { 
+      size: portrait; 
+      margin: 10mm 10mm 10mm 10mm; 
+    }
+    
+    @media print {
+      html, body { 
+        background: #ffffff !important; 
+        color: #000000 !important; 
+        height: 100% !important; 
+        width: 100% !important;
+        overflow: visible !important; 
+        display: block !important; 
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      aside, .mobile-header, #lock-screen, .section-header, .action-btn, button, .modal-overlay, .lightbox-modal, .clear-sig-btn { 
+        display: none !important; 
+        height: 0 !important;
+        width: 0 !important;
+        overflow: hidden !important;
+      }
+
+      main { 
+        padding: 0 !important; 
+        margin: 0 !important;
+        overflow: visible !important; 
+        background: none !important;
+        width: 100% !important;
+      }
+
+      /* Hide all non-active tabs in print preview */
+      .content-section { 
+        display: none !important; 
+      }
+
+      /* Force currently active view to be explicitly visible in print preview */
+      .content-section.active { 
+        display: block !important; 
+        visibility: visible !important;
+        opacity: 1 !important;
+        page-break-inside: avoid !important; 
+        break-inside: avoid !important;
+        page-break-before: avoid !important;
+        page-break-after: avoid !important;
+        height: auto !important;
+        width: 100% !important;
+      }
+
+      .document-container { 
+        padding: 0 !important; 
+        max-width: 100% !important; 
+        width: 100% !important;
+        box-shadow: none !important; 
+        border: none !important; 
+        page-break-inside: avoid !important; 
+        break-inside: avoid !important;
+        break-before: avoid !important;
+        break-after: avoid !important;
+        margin: 0 auto !important;
+        display: block !important;
+        visibility: visible !important;
+      }
+
+      .doc-table {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        width: 100% !important;
+      }
+
+      .doc-input-inline {
+        border-bottom: 1px solid #000 !important;
+      }
+
+      canvas {
+        border: 1px solid #000 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- MOBILE HEADER TOP BAR -->
+  <div class="mobile-header">
+    <div class="brand" style="margin-bottom:0;">
+      <div class="brand-icon">P</div>
+      PRESTIGE
+    </div>
+    <button class="menu-toggle-btn" onclick="toggleMobileSidebar()">☰ Menu</button>
+  </div>
+
+  <!-- SECURITY PIN OVERLAY -->
+  <div id="lock-screen">
+    <div class="pin-card">
+      <h2 id="pin-card-title">Security Access</h2>
+      <p id="pin-card-sub">Enter 4-Digit PIN Code</p>
+      <div class="pin-dots">
+        <div class="dot" id="dot1"></div>
+        <div class="dot" id="dot2"></div>
+        <div class="dot" id="dot3"></div>
+        <div class="dot" id="dot4"></div>
+      </div>
+      <div class="numpad">
+        <button class="num-btn" onclick="enterDigit('1')">1</button>
+        <button class="num-btn" onclick="enterDigit('2')">2</button>
+        <button class="num-btn" onclick="enterDigit('3')">3</button>
+        <button class="num-btn" onclick="enterDigit('4')">4</button>
+        <button class="num-btn" onclick="enterDigit('5')">5</button>
+        <button class="num-btn" onclick="enterDigit('6')">6</button>
+        <button class="num-btn" onclick="enterDigit('7')">7</button>
+        <button class="num-btn" onclick="enterDigit('8')">8</button>
+        <button class="num-btn" onclick="enterDigit('9')">9</button>
+        <button class="num-btn clear" onclick="clearPin()">C</button>
+        <button class="num-btn" onclick="enterDigit('0')">0</button>
+      </div>
+      <a class="change-pin-link" onclick="triggerChangePin()">Change PIN Code</a>
+    </div>
+  </div>
+
+  <!-- SIDEBAR NAVIGATION -->
+  <aside id="sidebar-drawer">
+    <div class="brand">
+      <div class="brand-icon">P</div>
+      PRESTIGE PHOTOGRAPHY
+    </div>
+    <div class="nav-list">
+      <button class="nav-item active" onclick="switchTab('packages', this)">Package Selector</button>
+      <button class="nav-item" onclick="switchTab('booking', this)">Booking Portal</button>
+      <button class="nav-item" onclick="switchTab('gallery', this)">Client Portfolios & Media</button>
+      <button class="nav-item" onclick="switchTab('notes', this)">Client Notes & Reminders</button>
+      <button class="nav-item" onclick="switchTab('invoice', this)">Invoice Generator</button>
+      <button class="nav-item" onclick="switchTab('contract', this)">Print Release</button>
+    </div>
+
+    <!-- BACKUP & RESTORE DATA CONTROLS -->
+    <div class="sync-actions-box">
+      <button class="sync-btn" onclick="exportDataBackup()">📥 Backup Data</button>
+      <button class="sync-btn" onclick="triggerRestoreUpload()">📤 Restore Data</button>
+      <input type="file" id="restore-file-input" accept=".json" style="display: none;" onchange="importDataBackup(event)">
+    </div>
+
+    <button class="lock-btn" onclick="lockApp()">🔒 Lock App</button>
+  </aside>
+
+  <!-- WORKSPACE -->
+  <main>
+
+    <!-- SECTION 1: PACKAGE SELECTOR -->
+    <div id="packages" class="content-section active">
+      <div class="section-header">
+        <div>
+          <h1>Package & Price Estimator</h1>
+          <p>Configure shoot pricing, dynamic vehicle tier rates, and optional add-ons.</p>
+        </div>
+      </div>
+
+      <div class="grid-3" style="margin-bottom: 20px;">
+        <div class="stat-card">
+          <div class="stat-title">Active Calendar Bookings</div>
+          <div class="stat-val" id="stat-booking-count">0 Shoots</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-title">Selected Package Tier</div>
+          <div class="stat-val" id="stat-selected-name">Standard Shoot</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-title">Calculated Total</div>
+          <div class="stat-val" id="stat-calc-total">$20.00</div>
+        </div>
+      </div>
+
+      <div class="grid-4">
+        <label class="selectable-card">
+          <input type="radio" name="pkg_tier" value="20" checked onclick="calculatePackageTotal()">
+          <h4>Standard Shoot</h4>
+          <p>Full location shoot with edited gallery delivery.</p>
+          <div class="price">$20.00</div>
+        </label>
+
+        <label class="selectable-card">
+          <input type="radio" name="pkg_tier" value="40" onclick="calculatePackageTotal()">
+          <h4>Sports / Action</h4>
+          <p>High-speed game & athletic motion coverage.</p>
+          <div class="price">$40.00</div>
+        </label>
+
+        <label class="selectable-card">
+          <input type="radio" name="pkg_tier" id="auto-radio" value="auto" onclick="calculatePackageTotal()">
+          <h4>Automotive / Fleet</h4>
+          <p>Dedicated vehicle coverage ($75 per 10 cars).</p>
+          <div class="price">$75.00/10</div>
+        </label>
+
+        <label class="selectable-card">
+          <input type="radio" name="pkg_tier" value="150" onclick="calculatePackageTotal()">
+          <h4>Real Estate</h4>
+          <p>Interior, exterior & structural photography package.</p>
+          <div class="price">$150.00</div>
+        </label>
+      </div>
+
+      <div id="auto-counter-box" class="auto-counter-container">
+        <div class="field" style="margin-bottom: 0;">
+          <label style="color: var(--accent); font-weight: 700;">Enter Total Vehicles / Fleet Size:</label>
+          <input type="number" id="car-count-input" value="10" min="1" placeholder="e.g. 10" oninput="calculatePackageTotal()" style="font-size: 1.1rem; font-weight: bold; max-width: 220px; margin-top: 6px;">
+          <p style="color: var(--text-sub); font-size: 0.8rem; margin-top: 8px;">Automotive coverage automatically rounds up to full sets of 10 cars ($75.00 / set).</p>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 20px;">
+        <h3 style="margin-bottom: 14px; font-size: 1.05rem;">Session Add-ons</h3>
+        <div class="grid-2">
+          
+          <div class="selectable-card" onclick="document.getElementById('extra-loc-count').focus()">
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+              <div>
+                <strong>Extra Location Stops</strong>
+                <p style="color: var(--accent); font-weight: bold; margin-top: 4px;">+$10.00 / stop</p>
+              </div>
+              <input type="number" id="extra-loc-count" value="0" min="0" oninput="calculatePackageTotal()" onChange="calculatePackageTotal()" onclick="event.stopPropagation()" style="width: 70px; padding: 8px; background: #070a12; border: 1px solid var(--accent); color: var(--text-main); border-radius: 8px; text-align: center; font-weight: bold; font-size: 0.95rem;">
+            </div>
+          </div>
+
+          <label class="selectable-card" style="display: flex; align-items: center; gap: 14px;">
+            <input type="checkbox" class="pkg-addon" value="20" onclick="calculatePackageTotal()">
+            <div>
+              <strong>Rush Gallery Delivery</strong>
+              <p>+$20.00</p>
+            </div>
+          </label>
+
+        </div>
+      </div>
+
+      <div class="total-bar">
+        <span>Calculated Total Estimate</span>
+        <div class="total-price">$<span id="pkg-total-val">20.00</span></div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: BOOKING PORTAL -->
+    <div id="booking" class="content-section">
+      <div class="section-header">
+        <div>
+          <h1>Booking Calendar Scheduler</h1>
+          <p>Schedule client appointments, track active shoots, and manage session dates.</p>
+        </div>
+        <button class="action-btn" onclick="openModal()">+ Schedule Shoot</button>
+      </div>
+
+      <div class="card">
+        <div class="cal-controls">
+          <button class="cal-btn" onclick="prevMonth()">&lt; Prev</button>
+          <div class="cal-title" id="cal-month-year">July 2026</div>
+          <button class="cal-btn" onclick="nextMonth()">Next &gt;</button>
+        </div>
+
+        <div class="calendar-grid" id="calendar-body"></div>
+      </div>
+    </div>
+
+    <!-- SECTION 3: CLIENT PORTFOLIOS & MEDIA DIRECTORY -->
+    <div id="gallery" class="content-section">
+      <div class="section-header">
+        <div>
+          <h1>Client Directory & Media Portfolios</h1>
+          <p>Upload photos and automatically create isolated client directories to view and manage portfolios.</p>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom: 20px;">
+        <h3 style="margin-bottom: 14px; font-size: 1.05rem; color: var(--accent);">Upload Photos to Directory</h3>
+        <div class="field">
+          <label>Directory / Client Name:</label>
+          <input type="text" id="dir-client-input" placeholder="e.g. Oklahoma City Fleet Shoot or Smith Wedding">
+        </div>
+
+        <div class="gallery-upload-zone" onclick="triggerPhotoSelect()">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" style="margin-bottom: 8px;">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="17 8 12 3 7 8"></polyline>
+            <line x1="12" y1="3" x2="12" y2="15"></line>
+          </svg>
+          <p style="font-weight: 700; font-size: 0.95rem;">Click Here to Choose Photos from Device</p>
+          <p style="color: var(--text-sub); font-size: 0.8rem; margin-top: 4px;">Upload JPG, PNG, or WEBP photos directly</p>
+          
+          <input type="file" id="file-upload-input" multiple accept="image/*" style="display: none;" onchange="handleFileUpload(event)">
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-bottom: 14px; font-size: 1.05rem;">Client Directories</h3>
+        <div id="directory-badges-list"></div>
+      </div>
+
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+          <h3 style="font-size: 1.05rem;" id="active-dir-title">Active Directory Photos</h3>
+          <button class="cal-btn" style="color: var(--danger); border-color: rgba(239, 68, 68, 0.3);" onclick="deleteActiveDirectory()">Delete Directory</button>
+        </div>
+
+        <div class="photo-grid" id="photo-grid-container">
+          <p style="color: var(--text-sub); font-size: 0.88rem; grid-column: 1 / -1;">No photos in this directory yet. Upload photos above to build this album.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- LIGHTBOX PREVIEW -->
+    <div class="lightbox-modal" id="lightbox" onclick="closeLightbox()">
+      <img id="lightbox-img" src="" alt="Preview">
+      <p style="color: #fff; margin-top: 14px; font-weight: 600; font-size: 0.85rem;">Tap anywhere to close preview</p>
+    </div>
+
+    <!-- MODAL POPUP FOR SAVING SHOOT EVENT -->
+    <div class="modal-overlay" id="event-modal">
+      <div class="modal-box">
+        <h3 style="margin-bottom: 16px; color: var(--accent);">Schedule Shoot Event</h3>
+        <div class="field">
+          <label>Client Name</label>
+          <input type="text" id="m-client" placeholder="e.g. Oklahoma City Fleet Shoot">
+        </div>
+        <div class="field">
+          <label>Shoot Date</label>
+          <input type="date" id="m-date">
+        </div>
+        <div class="field">
+          <label>Time Slot</label>
+          <input type="text" id="m-time" placeholder="e.g. 2:00 PM">
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+          <button class="action-btn" style="flex:1;" onclick="addCalendarEvent()">Save Event</button>
+          <button class="cal-btn" style="flex:1;" onclick="closeModal()">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 4: CLIENT NOTES & REMINDERS -->
+    <div id="notes" class="content-section">
+      <div class="section-header">
+        <div>
+          <h1>Client Notes & Reminders</h1>
+          <p>Keep track of client details, specific shot requests, or location reminders.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="field">
+          <label>New Detail or Reminder Note:</label>
+          <input type="text" id="note-input" placeholder="e.g. Client requested emergency fleet line-up shoot at sunset.">
+        </div>
+        <button class="action-btn" onclick="addClientNote()">Save Note</button>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-bottom: 14px; font-size: 1.05rem;">Saved Notes</h3>
+        <div id="notes-container">
+          <p style="color: var(--text-sub); font-size: 0.88rem;">No client notes recorded yet.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 5: INVOICE GENERATOR -->
+    <div id="invoice" class="content-section">
+      <div class="section-header">
+        <div>
+          <h1>Client Invoice Generator</h1>
+          <p>Review total amounts and export official PDF invoices directly for clients.</p>
+        </div>
+        <button class="action-btn" onclick="printDocument()">Print / Export PDF Invoice</button>
+      </div>
+
+      <div class="document-container">
+        <table class="doc-table">
+          <tr>
+            <td class="doc-logo-cell" rowspan="2">
+              <svg width="36" height="28" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                <circle cx="12" cy="13" r="4"></circle>
+              </svg>
+              <div class="doc-logo-title">PRESTIGE</div>
+              <div style="font-size: 0.65rem; font-weight: 800; letter-spacing: 1.2px;">PHOTOGRAPHY</div>
+            </td>
+            <td class="doc-header-title" colspan="2">
+              Prestige Photography | Official Invoice
+            </td>
+          </tr>
+          <tr>
+            <td><strong>Date:</strong> <input type="text" id="inv-date-field" class="doc-input-inline" placeholder="MM/DD/YYYY"></td>
+            <td><strong>Time:</strong> <input type="text" class="doc-input-inline" placeholder="12:00 PM"></td>
+          </tr>
+        </table>
+
+        <table class="doc-table">
+          <tr>
+            <td><strong>Invoice ID:</strong> <input type="text" class="doc-input-inline" placeholder="#INV-1001"></td>
+          </tr>
+        </table>
+
+        <table class="doc-table">
+          <tr>
+            <td style="width: 50%;"><strong>Client Name:</strong> <input type="text" class="doc-input-inline" placeholder="Full Name"></td>
+            <td style="width: 50%;"><strong>Phone / Email:</strong> <input type="text" class="doc-input-inline" placeholder="Contact Details"></td>
+          </tr>
+        </table>
+
+        <table class="doc-table">
+          <tr>
+            <td>
+              <strong>Description:</strong>
+              <input type="text" class="doc-input-inline" style="width: 85%; margin-top: 4px;" placeholder="Photoshoot session details...">
+            </td>
+          </tr>
+        </table>
+
+        <table class="doc-table">
+          <tr>
+            <th style="width: 50%; text-align: center;">Shoot Tier Selected</th>
+            <th style="width: 50%; text-align: center;">Total Pricing</th>
+          </tr>
+          <tr>
+            <td style="text-align: center; font-weight: bold;" id="inv-tier-display">Standard Shoot</td>
+            <td style="text-align: center; font-weight: 800; font-size: 1.1rem;" id="inv-total-display">$20.00</td>
+          </tr>
+        </table>
+
+        <div style="margin-top: 16px; text-align: right;">
+          <p style="font-size: 0.8rem; color: #555;">Payment due upon gallery release. Thank you for your business!</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 6: PRINT RELEASE -->
+    <div id="contract" class="content-section">
+      <div class="section-header">
+        <div>
+          <h1>Media Copyright & Print Release</h1>
+          <p>Generate single-page copyright authorization release forms with interactive signature capture.</p>
+        </div>
+        <button class="action-btn" onclick="printDocument()">Print / Export Release</button>
+      </div>
+
+      <div class="document-container">
+        <table class="doc-table">
+          <tr>
+            <td class="doc-logo-cell" rowspan="2">
+              <svg width="36" height="28" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                <circle cx="12" cy="13" r="4"></circle>
+              </svg>
+              <div class="doc-logo-title">PRESTIGE</div>
+              <div style="font-size: 0.65rem; font-weight: 800; letter-spacing: 1.2px;">PHOTOGRAPHY</div>
+            </td>
+            <td class="doc-header-title" colspan="2">
+              MEDIA COPYRIGHT & PRINT RELEASE AGREEMENT
+            </td>
+          </tr>
+          <tr>
+            <td><strong>Date:</strong> <input type="text" id="rel-date-field" class="doc-input-inline" placeholder="MM/DD/YYYY"></td>
+            <td><strong>Location:</strong> <input type="text" class="doc-input-inline" placeholder="Oklahoma City, OK"></td>
+          </tr>
+        </table>
+
+        <table class="doc-table">
+          <tr>
+            <td style="width: 50%;"><strong>Grantor (Photographer):</strong> Prestige Photography</td>
+            <td style="width: 50%;"><strong>Grantee (Client):</strong> <input type="text" class="doc-input-inline" placeholder="Client Name / Agency"></td>
+          </tr>
+        </table>
+
+        <table class="doc-table">
+          <tr>
+            <td style="font-size: 0.8rem; line-height: 1.5; padding: 14px;">
+              Prestige Photography grants non-exclusive, perpetual media usage rights to the client named above for personal, social media, agency display, and promotional print purposes. Full copyright ownership remains retained by Prestige Photography. Reproduction or resale without consent is prohibited.
+            </td>
+          </tr>
+        </table>
+
+        <table class="doc-table" style="margin-top: 10px;">
+          <tr>
+            <td style="width: 50%;">
+              <strong>Client Signature:</strong>
+              <canvas id="sig-canvas"></canvas>
+              <button class="clear-sig-btn" onclick="clearCanvas()" style="margin-top: 4px; padding: 2px 8px; font-size: 0.7rem; cursor: pointer; background: #eee; border: 1px solid #ccc; border-radius: 4px;">Clear Signature</button>
+            </td>
+            <td style="width: 50%; vertical-align: bottom;">
+              <strong>Photographer Authorization:</strong>
+              <div style="font-family: cursive; font-size: 1.2rem; margin-top: 20px; font-weight: bold;">Prestige Photography</div>
+              <hr style="border: none; border-top: 1px solid #000; margin-top: 8px;">
+            </td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    /* PIN SECURITY SYSTEM */
+    let currentPin = localStorage.getItem('app_pin') || "0814";
+    let enteredPin = "";
+
+    function enterDigit(num) {
+      if (enteredPin.length < 4) {
+        enteredPin += num;
+        updateDots();
+        if (enteredPin.length === 4) {
+          setTimeout(verifyPin, 100);
+        }
+      }
+    }
+
+    function clearPin() {
+      enteredPin = "";
+      updateDots();
+    }
+
+    function updateDots() {
+      for (let i = 1; i <= 4; i++) {
+        const dot = document.getElementById(`dot${i}`);
+        if (i <= enteredPin.length) {
+          dot.classList.add('active');
+        } else {
+          dot.classList.remove('active');
+        }
+      }
+    }
+
+    function verifyPin() {
+      if (enteredPin === currentPin) {
+        document.getElementById('lock-screen').style.display = 'none';
+        clearPin();
+      } else {
+        alert("Incorrect Security PIN code!");
+        clearPin();
+      }
+    }
+
+    function lockApp() {
+      document.getElementById('lock-screen').style.display = 'flex';
+      clearPin();
+    }
+
+    function triggerChangePin() {
+      const oldP = prompt("Enter Current PIN:");
+      if (oldP === currentPin) {
+        const newP = prompt("Enter NEW 4-Digit PIN:");
+        if (newP && newP.length === 4 && !isNaN(newP)) {
+          currentPin = newP;
+          localStorage.setItem('app_pin', newP);
+          alert("PIN changed successfully!");
+        } else {
+          alert("Invalid PIN format. Must be 4 numbers.");
+        }
+      } else if (oldP !== null) {
+        alert("Incorrect current PIN!");
+      }
+    }
+
+    /* NAVIGATION & MOBILE DRAWER */
+    function switchTab(tabId, btn) {
+      document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+
+      document.getElementById(tabId).classList.add('active');
+      if (btn) btn.classList.add('active');
+
+      document.getElementById('sidebar-drawer').classList.remove('open');
+      
+      if (tabId === 'contract') {
+        setTimeout(resizeCanvas, 100);
+      }
+    }
+
+    function toggleMobileSidebar() {
+      document.getElementById('sidebar-drawer').classList.toggle('open');
+    }
+
+    /* PACKAGE CALCULATOR */
+    function calculatePackageTotal() {
+      let base = 20;
+      let selectedName = "Standard Shoot";
+      const selectedRadio = document.querySelector('input[name="pkg_tier"]:checked');
+
+      if (selectedRadio) {
+        if (selectedRadio.value === 'auto') {
+          document.getElementById('auto-counter-box').style.display = 'block';
+          const cars = parseInt(document.getElementById('car-count-input').value) || 10;
+          const sets = Math.ceil(cars / 10);
+          base = sets * 75;
+          selectedName = `Automotive (${cars} cars / ${sets} sets)`;
+        } else {
+          document.getElementById('auto-counter-box').style.display = 'none';
+          base = parseFloat(selectedRadio.value);
+          if (base === 20) selectedName = "Standard Shoot";
+          if (base === 40) selectedName = "Sports / Action";
+          if (base === 150) selectedName = "Real Estate";
+        }
+      }
+
+      const extraLocs = parseInt(document.getElementById('extra-loc-count').value) || 0;
+      let total = base + (extraLocs * 10);
+
+      document.querySelectorAll('.pkg-addon:checked').forEach(cb => {
+        total += parseFloat(cb.value);
+      });
+
+      document.getElementById('pkg-total-val').innerText = total.toFixed(2);
+      document.getElementById('stat-calc-total').innerText = '$' + total.toFixed(2);
+      document.getElementById('stat-selected-name').innerText = selectedName;
+
+      document.getElementById('inv-tier-display').innerText = selectedName;
+      document.getElementById('inv-total-display').innerText = '$' + total.toFixed(2);
+    }
+
+    /* BOOKING CALENDAR */
+    let currentDate = new Date(2026, 6, 1); // July 2026
+    let calendarEvents = JSON.parse(localStorage.getItem('cal_events') || '[]');
+
+    function renderCalendar() {
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+      const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+      document.getElementById('cal-month-year').innerText = `${monthNames[month]} ${year}`;
+      const grid = document.getElementById('calendar-body');
+      grid.innerHTML = '';
+
+      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      days.forEach(d => {
+        const h = document.createElement('div');
+        h.className = 'cal-day-header';
+        h.innerText = d;
+        grid.appendChild(h);
+      });
+
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+      for (let i = 0; i < firstDay; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'cal-cell empty';
+        grid.appendChild(cell);
+      }
+
+      let activeCount = 0;
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const cell = document.createElement('div');
+        cell.className = 'cal-cell';
+        const formattedDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+        cell.innerHTML = `<div class="cal-num">${day}</div>`;
+
+        const dayEvents = calendarEvents.filter(e => e.date === formattedDate);
+        dayEvents.forEach((ev, idx) => {
+          activeCount++;
+          const tag = document.createElement('div');
+          tag.className = 'event-tag';
+          tag.innerHTML = `<span>${ev.client} (${ev.time})</span><button class="event-del-btn" onclick="deleteEvent('${ev.id}', event)">×</button>`;
+          cell.appendChild(tag);
+        });
+
+        cell.onclick = (e) => {
+          if (!e.target.classList.contains('event-del-btn')) {
+            openModal(formattedDate);
+          }
+        };
+
+        grid.appendChild(cell);
+      }
+
+      document.getElementById('stat-booking-count').innerText = `${activeCount} Shoots`;
+    }
+
+    function prevMonth() { currentDate.setMonth(currentDate.getMonth() - 1); renderCalendar(); }
+    function nextMonth() { currentDate.setMonth(currentDate.getMonth() + 1); renderCalendar(); }
+
+    function openModal(dateStr = '') {
+      document.getElementById('event-modal').style.display = 'flex';
+      if (dateStr) document.getElementById('m-date').value = dateStr;
+    }
+    function closeModal() { document.getElementById('event-modal').style.display = 'none'; }
+
+    function addCalendarEvent() {
+      const client = document.getElementById('m-client').value || "Client Shoot";
+      const date = document.getElementById('m-date').value;
+      const time = document.getElementById('m-time').value || "12:00 PM";
+
+      if (!date) { alert("Please choose a shoot date."); return; }
+
+      const newEv = { id: Date.now().toString(), client, date, time };
+      calendarEvents.push(newEv);
+      localStorage.setItem('cal_events', JSON.stringify(calendarEvents));
+
+      closeModal();
+      document.getElementById('m-client').value = '';
+      renderCalendar();
+    }
+
+    function deleteEvent(id, e) {
+      e.stopPropagation();
+      calendarEvents = calendarEvents.filter(ev => ev.id !== id);
+      localStorage.setItem('cal_events', JSON.stringify(calendarEvents));
+      renderCalendar();
+    }
+
+    /* CLIENT MEDIA DIRECTORIES */
+    let photoDirectories = JSON.parse(localStorage.getItem('photo_dirs') || '{"Oklahoma City Fleet Shoot": []}');
+    let activeDirName = "Oklahoma City Fleet Shoot";
+
+    function triggerPhotoSelect() {
+      document.getElementById('file-upload-input').click();
+    }
+
+    function handleFileUpload(event) {
+      const files = event.target.files;
+      if (!files.length) return;
+
+      const customDir = document.getElementById('dir-client-input').value.trim();
+      const targetDir = customDir || activeDirName || "General Portfolio";
+
+      if (!photoDirectories[targetDir]) {
+        photoDirectories[targetDir] = [];
+      }
+
+      Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          photoDirectories[targetDir].push(e.target.result);
+          localStorage.setItem('photo_dirs', JSON.stringify(photoDirectories));
+          activeDirName = targetDir;
+          renderDirectories();
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function renderDirectories() {
+      const badgesContainer = document.getElementById('directory-badges-list');
+      badgesContainer.innerHTML = '';
+
+      const keys = Object.keys(photoDirectories);
+      if (!keys.length) {
+        badgesContainer.innerHTML = '<p style="color:var(--text-sub); font-size:0.85rem;">No directories created.</p>';
+        renderPhotos();
+        return;
+      }
+
+      if (!keys.includes(activeDirName)) activeDirName = keys[0];
+
+      keys.forEach(key => {
+        const badge = document.createElement('div');
+        badge.className = `directory-badge ${key === activeDirName ? 'active' : ''}`;
+        badge.innerText = `${key} (${photoDirectories[key].length})`;
+        badge.onclick = () => { activeDirName = key; renderDirectories(); };
+        badgesContainer.appendChild(badge);
+      });
+
+      renderPhotos();
+    }
+
+    function renderPhotos() {
+      const container = document.getElementById('photo-grid-container');
+      container.innerHTML = '';
+      document.getElementById('active-dir-title').innerText = `Active Directory: ${activeDirName}`;
+
+      const photos = photoDirectories[activeDirName] || [];
+      if (!photos.length) {
+        container.innerHTML = '<p style="color: var(--text-sub); font-size: 0.88rem; grid-column: 1 / -1;">No photos in this directory yet. Upload photos above to build this album.</p>';
+        return;
+      }
+
+      photos.forEach((src, idx) => {
+        const card = document.createElement('div');
+        card.className = 'photo-card';
+        card.innerHTML = `
+          <img src="${src}" alt="Photo">
+          <div class="photo-actions">
+            <button class="photo-btn" onclick="openLightbox('${src}')">View</button>
+            <button class="photo-btn delete-btn" onclick="deletePhoto(${idx})">Delete</button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function deletePhoto(idx) {
+      photoDirectories[activeDirName].splice(idx, 1);
+      localStorage.setItem('photo_dirs', JSON.stringify(photoDirectories));
+      renderDirectories();
+    }
+
+    function deleteActiveDirectory() {
+      if (confirm(`Are you sure you want to delete the directory "${activeDirName}" and all its photos?`)) {
+        delete photoDirectories[activeDirName];
+        localStorage.setItem('photo_dirs', JSON.stringify(photoDirectories));
+        activeDirName = Object.keys(photoDirectories)[0] || "";
+        renderDirectories();
+      }
+    }
+
+    function openLightbox(src) {
+      document.getElementById('lightbox-img').src = src;
+      document.getElementById('lightbox').style.display = 'flex';
+    }
+    function closeLightbox() { document.getElementById('lightbox').style.display = 'none'; }
+
+    /* CLIENT NOTES */
+    let clientNotes = JSON.parse(localStorage.getItem('client_notes') || '[]');
+
+    function renderNotes() {
+      const container = document.getElementById('notes-container');
+      container.innerHTML = '';
+
+      if (!clientNotes.length) {
+        container.innerHTML = '<p style="color: var(--text-sub); font-size: 0.88rem;">No client notes recorded yet.</p>';
+        return;
+      }
+
+      clientNotes.forEach((note, idx) => {
+        const item = document.createElement('div');
+        item.className = 'note-item';
+        item.innerHTML = `
+          <span style="font-size:0.9rem;">${note}</span>
+          <button class="event-del-btn" style="color:var(--danger); padding:4px 8px;" onclick="deleteNote(${idx})">Delete</button>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function addClientNote() {
+      const val = document.getElementById('note-input').value.trim();
+      if (val) {
+        clientNotes.push(val);
+        localStorage.setItem('client_notes', JSON.stringify(clientNotes));
+        document.getElementById('note-input').value = '';
+        renderNotes();
+      }
+    }
+
+    function deleteNote(idx) {
+      clientNotes.splice(idx, 1);
+      localStorage.setItem('client_notes', JSON.stringify(clientNotes));
+      renderNotes();
+    }
+
+    /* DATA BACKUP AND RESTORE UTILITIES */
+    function exportDataBackup() {
+      const backupData = {
+        cal_events: JSON.parse(localStorage.getItem('cal_events') || '[]'),
+        client_notes: JSON.parse(localStorage.getItem('client_notes') || '[]'),
+        photo_dirs: JSON.parse(localStorage.getItem('photo_dirs') || '{}'),
+        app_pin: localStorage.getItem('app_pin') || "0814"
+      };
+
+      const jsonStr = JSON.stringify(backupData, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `prestige_app_backup_${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function triggerRestoreUpload() {
+      document.getElementById('restore-file-input').click();
+    }
+
+    function importDataBackup(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const importedData = JSON.parse(e.target.result);
+
+          if (importedData.cal_events) {
+            localStorage.setItem('cal_events', JSON.stringify(importedData.cal_events));
+            calendarEvents = importedData.cal_events;
+          }
+          if (importedData.client_notes) {
+            localStorage.setItem('client_notes', JSON.stringify(importedData.client_notes));
+            clientNotes = importedData.client_notes;
+          }
+          if (importedData.photo_dirs) {
+            localStorage.setItem('photo_dirs', JSON.stringify(importedData.photo_dirs));
+            photoDirectories = importedData.photo_dirs;
+            activeDirName = Object.keys(photoDirectories)[0] || "";
+          }
+          if (importedData.app_pin) {
+            localStorage.setItem('app_pin', importedData.app_pin);
+            currentPin = importedData.app_pin;
+          }
+
+          renderCalendar();
+          renderDirectories();
+          renderNotes();
+
+          alert("App data restored successfully!");
+        } catch (err) {
+          alert("Failed to read backup file. Please ensure it is a valid JSON file.");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    /* SIGNATURE CANVAS FOR PRINT RELEASE */
+    const canvas = document.getElementById('sig-canvas');
+    const ctx = canvas.getContext('2d');
+    let isDrawing = false;
+
+    function resizeCanvas() {
+      if (!canvas || !canvas.parentElement) return;
+      const rect = canvas.parentElement.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      
+      canvas.width = (rect.width - 24) * dpr;
+      canvas.height = 100 * dpr;
+      ctx.scale(dpr, dpr);
+    }
+    window.addEventListener('resize', resizeCanvas);
+    setTimeout(resizeCanvas, 200);
+
+    function startDraw(e) {
+      isDrawing = true;
+      ctx.beginPath();
+      const pos = getPos(e);
+      ctx.moveTo(pos.x, pos.y);
+    }
+
+    function draw(e) {
+      if (!isDrawing) return;
+      const pos = getPos(e);
+      ctx.lineWidth = 2;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = '#000000';
+      ctx.lineTo(pos.x, pos.y);
+      ctx.stroke();
+    }
+
+    function stopDraw() { isDrawing = false; }
+
+    function getPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return { x: clientX - rect.left, y: clientY - rect.top };
+    }
+
+    canvas.addEventListener('mousedown', startDraw);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDraw);
+    canvas.addEventListener('touchstart', startDraw);
+    canvas.addEventListener('touchmove', draw);
+    canvas.addEventListener('touchend', stopDraw);
+
+    function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+
+    function printDocument() {
+      window.print();
+    }
+
+    /* INITIALIZATION */
+    const todayStr = new Date().toLocaleDateString('en-US');
+    document.getElementById('inv-date-field').value = todayStr;
+    document.getElementById('rel-date-field').value = todayStr;
+
+    calculatePackageTotal();
+    renderCalendar();
+    renderDirectories();
+    renderNotes();
+  </script>
+</body>
+</html>
