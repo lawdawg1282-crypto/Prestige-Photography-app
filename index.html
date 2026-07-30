@@ -170,7 +170,7 @@
       text-align: center; background: rgba(255, 255, 255, 0.01); transition: 0.2s; cursor: pointer;
     }
     .gallery-upload-zone:hover { border-color: var(--accent); background: rgba(56, 189, 248, 0.02); }
-    
+
     .directory-badge {
       display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.03);
       border: 1px solid var(--panel-border); padding: 8px 14px; border-radius: 10px;
@@ -339,12 +339,10 @@
         width: 100% !important;
       }
 
-      /* Hide all non-active tabs in print preview */
       .content-section { 
         display: none !important; 
       }
 
-      /* Force currently active view to be explicitly visible in print preview */
       .content-section.active { 
         display: block !important; 
         visibility: visible !important;
@@ -673,69 +671,57 @@
     <div id="invoice" class="content-section">
       <div class="section-header">
         <div>
-          <h1>Client Invoice Generator</h1>
-          <p>Review total amounts and export official PDF invoices directly for clients.</p>
+          <h1>Invoice Generator</h1>
+          <p>Create and print professional billing statements for your clients.</p>
         </div>
-        <button class="action-btn" onclick="printDocument()">Print / Export PDF Invoice</button>
+        <button class="action-btn" onclick="window.print()">🖨️ Print Invoice</button>
       </div>
 
       <div class="document-container">
         <table class="doc-table">
           <tr>
-            <td class="doc-logo-cell" rowspan="2">
-              <svg width="36" height="28" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2">
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                <circle cx="12" cy="13" r="4"></circle>
-              </svg>
-              <div class="doc-logo-title">PRESTIGE</div>
-              <div style="font-size: 0.65rem; font-weight: 800; letter-spacing: 1.2px;">PHOTOGRAPHY</div>
+            <td class="doc-logo-cell">
+              <div class="doc-logo-title">PRESTIGE PHOTOGRAPHY</div>
             </td>
-            <td class="doc-header-title" colspan="2">
-              Prestige Photography | Official Invoice
+            <td colspan="2">
+              <div class="doc-header-title">INVOICE STATEMENT</div>
+              <p style="font-size: 0.75rem; text-align: center; margin-top: 4px;">Official Photography & Digital Media Invoice</p>
             </td>
           </tr>
-          <tr>
-            <td><strong>Date:</strong> <input type="text" id="inv-date-field" class="doc-input-inline" placeholder="MM/DD/YYYY"></td>
-            <td><strong>Time:</strong> <input type="text" class="doc-input-inline" placeholder="12:00 PM"></td>
-          </tr>
-        </table>
-
-        <table class="doc-table">
-          <tr>
-            <td><strong>Invoice ID:</strong> <input type="text" class="doc-input-inline" placeholder="#INV-1001"></td>
-          </tr>
-        </table>
-
-        <table class="doc-table">
-          <tr>
-            <td style="width: 50%;"><strong>Client Name:</strong> <input type="text" class="doc-input-inline" placeholder="Full Name"></td>
-            <td style="width: 50%;"><strong>Phone / Email:</strong> <input type="text" class="doc-input-inline" placeholder="Contact Details"></td>
-          </tr>
-        </table>
-
-        <table class="doc-table">
           <tr>
             <td>
-              <strong>Description:</strong>
-              <input type="text" class="doc-input-inline" style="width: 85%; margin-top: 4px;" placeholder="Photoshoot session details...">
+              <strong>Billed To:</strong><br>
+              <input type="text" class="doc-input-inline" placeholder="Client Name / Business">
+            </td>
+            <td>
+              <strong>Date:</strong><br>
+              <input type="date" class="doc-input-inline">
+            </td>
+            <td>
+              <strong>Invoice #:</strong><br>
+              <input type="text" class="doc-input-inline" value="INV-1001">
             </td>
           </tr>
-        </table>
-
-        <table class="doc-table">
           <tr>
-            <th style="width: 50%; text-align: center;">Shoot Tier Selected</th>
-            <th style="width: 50%; text-align: center;">Total Pricing</th>
+            <th style="text-align: left;">Description</th>
+            <th style="text-align: center;">Qty / Units</th>
+            <th style="text-align: right;">Amount</th>
           </tr>
           <tr>
-            <td style="text-align: center; font-weight: bold;" id="inv-tier-display">Standard Shoot</td>
-            <td style="text-align: center; font-weight: 800; font-size: 1.1rem;" id="inv-total-display">$20.00</td>
+            <td><input type="text" class="doc-input-inline" value="Photography Services" style="width: 95%;"></td>
+            <td style="text-align: center;"><input type="text" class="doc-input-inline" value="1" style="width: 50px; text-align: center;"></td>
+            <td style="text-align: right;">$<input type="text" class="doc-input-inline" value="0.00" style="width: 80px; text-align: right;"></td>
+          </tr>
+          <tr>
+            <td><input type="text" class="doc-input-inline" placeholder="Additional Add-on / Stop" style="width: 95%;"></td>
+            <td style="text-align: center;"><input type="text" class="doc-input-inline" value="1" style="width: 50px; text-align: center;"></td>
+            <td style="text-align: right;">$<input type="text" class="doc-input-inline" value="0.00" style="width: 80px; text-align: right;"></td>
+          </tr>
+          <tr>
+            <td colspan="2" style="text-align: right; font-weight: bold;">Total Amount Due:</td>
+            <td style="text-align: right; font-weight: bold;">$<input type="text" class="doc-input-inline" value="0.00" style="width: 80px; text-align: right; font-weight: bold;"></td>
           </tr>
         </table>
-
-        <div style="margin-top: 16px; text-align: right;">
-          <p style="font-size: 0.8rem; color: #555;">Payment due upon gallery release. Thank you for your business!</p>
-        </div>
       </div>
     </div>
 
@@ -743,59 +729,35 @@
     <div id="contract" class="content-section">
       <div class="section-header">
         <div>
-          <h1>Media Copyright & Print Release</h1>
-          <p>Generate single-page copyright authorization release forms with interactive signature capture.</p>
+          <h1>Print & Photo Release Form</h1>
+          <p>Generate print release agreements complete with digital client signatures.</p>
         </div>
-        <button class="action-btn" onclick="printDocument()">Print / Export Release</button>
+        <button class="action-btn" onclick="window.print()">🖨️ Print Release</button>
       </div>
 
       <div class="document-container">
         <table class="doc-table">
           <tr>
-            <td class="doc-logo-cell" rowspan="2">
-              <svg width="36" height="28" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2">
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                <circle cx="12" cy="13" r="4"></circle>
-              </svg>
-              <div class="doc-logo-title">PRESTIGE</div>
-              <div style="font-size: 0.65rem; font-weight: 800; letter-spacing: 1.2px;">PHOTOGRAPHY</div>
+            <td class="doc-logo-cell">
+              <div class="doc-logo-title">PRESTIGE PHOTOGRAPHY</div>
             </td>
-            <td class="doc-header-title" colspan="2">
-              MEDIA COPYRIGHT & PRINT RELEASE AGREEMENT
+            <td>
+              <div class="doc-header-title">COPYRIGHT & PRINT RELEASE</div>
             </td>
           </tr>
           <tr>
-            <td><strong>Date:</strong> <input type="text" id="rel-date-field" class="doc-input-inline" placeholder="MM/DD/YYYY"></td>
-            <td><strong>Location:</strong> <input type="text" class="doc-input-inline" placeholder="Oklahoma City, OK"></td>
-          </tr>
-        </table>
-
-        <table class="doc-table">
-          <tr>
-            <td style="width: 50%;"><strong>Grantor (Photographer):</strong> Prestige Photography</td>
-            <td style="width: 50%;"><strong>Grantee (Client):</strong> <input type="text" class="doc-input-inline" placeholder="Client Name / Agency"></td>
-          </tr>
-        </table>
-
-        <table class="doc-table">
-          <tr>
-            <td style="font-size: 0.8rem; line-height: 1.5; padding: 14px;">
-              Prestige Photography grants non-exclusive, perpetual media usage rights to the client named above for personal, social media, agency display, and promotional print purposes. Full copyright ownership remains retained by Prestige Photography. Reproduction or resale without consent is prohibited.
+            <td colspan="2">
+              <p style="font-size: 0.85rem; line-height: 1.5; margin-bottom: 12px;">
+                This release certifies that <strong><input type="text" class="doc-input-inline" placeholder="Client Name"></strong> 
+                is granted non-exclusive personal and promotional print rights for the image deliverables provided by Prestige Photography.
+              </p>
             </td>
           </tr>
-        </table>
-
-        <table class="doc-table" style="margin-top: 10px;">
           <tr>
-            <td style="width: 50%;">
-              <strong>Client Signature:</strong>
+            <td colspan="2">
+              <strong>Digital Signature:</strong><br>
               <canvas id="sig-canvas"></canvas>
-              <button class="clear-sig-btn" onclick="clearCanvas()" style="margin-top: 4px; padding: 2px 8px; font-size: 0.7rem; cursor: pointer; background: #eee; border: 1px solid #ccc; border-radius: 4px;">Clear Signature</button>
-            </td>
-            <td style="width: 50%; vertical-align: bottom;">
-              <strong>Photographer Authorization:</strong>
-              <div style="font-family: cursive; font-size: 1.2rem; margin-top: 20px; font-weight: bold;">Prestige Photography</div>
-              <hr style="border: none; border-top: 1px solid #000; margin-top: 8px;">
+              <button class="cal-btn clear-sig-btn" style="margin-top: 6px; font-size: 0.75rem;" onclick="clearSignature()">Clear Signature</button>
             </td>
           </tr>
         </table>
@@ -804,539 +766,504 @@
 
   </main>
 
-  <script>
-    /* PIN SECURITY SYSTEM */
-    let currentPin = localStorage.getItem('app_pin') || "0814";
-    let enteredPin = "";
+  <!-- FIREBASE SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
-    function enterDigit(num) {
-      if (enteredPin.length < 4) {
-        enteredPin += num;
-        updateDots();
-        if (enteredPin.length === 4) {
-          setTimeout(verifyPin, 100);
+  <!-- CORE APPLICATION LOGIC & REALTIME SYNC -->
+  <script>
+    // --- FIREBASE CONFIGURATION ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyBEmLZUiCyxh1KSCbwy59OdJjmGQwoeNFc",
+      authDomain: "prestige-app-10027.firebaseapp.com",
+      databaseURL: "https://prestige-app-10027-default-rtdb.firebaseio.com",
+      projectId: "prestige-app-10027",
+      storageBucket: "prestige-app-10027.firebasestorage.app",
+      messagingSenderId: "1023409177753",
+      appId: "1:1023409177753:web:037b2657c918c33ac3e408",
+      measurementId: "G-B9J6MS79WJ"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    const appDataRef = database.ref("appData");
+
+    // --- APP STATE ---
+    let appState = {
+      pin: "1234",
+      events: [],
+      notes: [],
+      galleries: {}, // { "Directory Name": [base64Image1, base64Image2] }
+      activeDir: ""
+    };
+
+    let pinInput = "";
+    let isChangingPin = false;
+    let currDate = new Date();
+
+    // Initialize application data on load
+    window.addEventListener("DOMContentLoaded", () => {
+      loadLocalState();
+      initRealtimeSync();
+      renderCalendar();
+      renderNotes();
+      renderGalleries();
+      initSignatureCanvas();
+      calculatePackageTotal();
+    });
+
+    function loadLocalState() {
+      const saved = localStorage.getItem("prestige_app_data");
+      if (saved) {
+        try {
+          appState = Object.assign(appState, JSON.parse(saved));
+        } catch (e) { console.error("Error loading local state:", e); }
+      }
+    }
+
+    function saveStateAndSync() {
+      localStorage.setItem("prestige_app_data", JSON.stringify(appState));
+      saveToCloud(appState);
+    }
+
+    function saveToCloud(data) {
+      appDataRef.set(data).then(() => {
+        console.log("Data successfully synced to Firebase Cloud!");
+      }).catch((err) => {
+        console.error("Firebase Sync Error:", err);
+      });
+    }
+
+    function initRealtimeSync() {
+      appDataRef.on("value", (snapshot) => {
+        const cloudData = snapshot.val();
+        if (cloudData) {
+          appState = Object.assign(appState, cloudData);
+          localStorage.setItem("prestige_app_data", JSON.stringify(appState));
+          renderCalendar();
+          renderNotes();
+          renderGalleries();
         }
+      });
+    }
+
+    // --- PIN & SECURITY ---
+    function enterDigit(d) {
+      if (pinInput.length < 4) {
+        pinInput += d;
+        updatePinDots();
+        if (pinInput.length === 4) setTimeout(checkPin, 100);
       }
     }
 
     function clearPin() {
-      enteredPin = "";
-      updateDots();
+      pinInput = "";
+      updatePinDots();
     }
 
-    function updateDots() {
+    function updatePinDots() {
       for (let i = 1; i <= 4; i++) {
-        const dot = document.getElementById(`dot${i}`);
-        if (i <= enteredPin.length) {
-          dot.classList.add('active');
-        } else {
-          dot.classList.remove('active');
-        }
+        document.getElementById(`dot${i}`).classList.toggle("active", i <= pinInput.length);
       }
     }
 
-    function verifyPin() {
-      if (enteredPin === currentPin) {
-        document.getElementById('lock-screen').style.display = 'none';
+    function checkPin() {
+      if (isChangingPin) {
+        appState.pin = pinInput;
+        saveStateAndSync();
+        alert("Security PIN updated successfully!");
+        isChangingPin = false;
+        document.getElementById("pin-card-title").innerText = "Security Access";
+        document.getElementById("pin-card-sub").innerText = "Enter 4-Digit PIN Code";
         clearPin();
       } else {
-        alert("Incorrect Security PIN code!");
-        clearPin();
+        if (pinInput === appState.pin) {
+          document.getElementById("lock-screen").style.display = "none";
+          clearPin();
+        } else {
+          alert("Incorrect PIN Code");
+          clearPin();
+        }
       }
-    }
-
-    function lockApp() {
-      document.getElementById('lock-screen').style.display = 'flex';
-      clearPin();
     }
 
     function triggerChangePin() {
-      const oldP = prompt("Enter Current PIN:");
-      if (oldP === currentPin) {
-        const newP = prompt("Enter NEW 4-Digit PIN:");
-        if (newP && newP.length === 4 && !isNaN(newP)) {
-          currentPin = newP;
-          localStorage.setItem('app_pin', newP);
-          alert("PIN changed successfully!");
-        } else {
-          alert("Invalid PIN format. Must be 4 numbers.");
-        }
-      } else if (oldP !== null) {
-        alert("Incorrect current PIN!");
-      }
+      isChangingPin = true;
+      document.getElementById("pin-card-title").innerText = "Set New PIN";
+      document.getElementById("pin-card-sub").innerText = "Enter New 4-Digit PIN Code";
+      clearPin();
     }
 
-    /* NAVIGATION & MOBILE DRAWER */
-    function switchTab(tabId, btn) {
-      document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
-      document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+    function lockApp() {
+      document.getElementById("lock-screen").style.display = "flex";
+      clearPin();
+    }
 
-      document.getElementById(tabId).classList.add('active');
-      if (btn) btn.classList.add('active');
-
-      document.getElementById('sidebar-drawer').classList.remove('open');
-      
-      if (tabId === 'contract') {
-        setTimeout(resizeCanvas, 100);
+    // --- NAVIGATION ---
+    function switchTab(tabId, el) {
+      document.querySelectorAll(".content-section").forEach(s => s.classList.remove("active"));
+      document.querySelectorAll(".nav-item").forEach(i => i.classList.remove("active"));
+      document.getElementById(tabId).classList.add("active");
+      if (el) el.classList.add("active");
+      if (window.innerWidth <= 991) {
+        document.getElementById("sidebar-drawer").classList.remove("open");
       }
     }
 
     function toggleMobileSidebar() {
-      document.getElementById('sidebar-drawer').classList.toggle('open');
+      document.getElementById("sidebar-drawer").classList.toggle("open");
     }
 
-    /* PACKAGE CALCULATOR */
+    // --- PACKAGE CALCULATOR ---
     function calculatePackageTotal() {
-      let base = 20;
+      let total = 0;
       let selectedName = "Standard Shoot";
-      const selectedRadio = document.querySelector('input[name="pkg_tier"]:checked');
+      const radios = document.getElementsByName("pkg_tier");
+      let autoSelected = false;
 
-      if (selectedRadio) {
-        if (selectedRadio.value === 'auto') {
-          document.getElementById('auto-counter-box').style.display = 'block';
-          const cars = parseInt(document.getElementById('car-count-input').value) || 10;
-          const sets = Math.ceil(cars / 10);
-          base = sets * 75;
-          selectedName = `Automotive (${cars} cars / ${sets} sets)`;
-        } else {
-          document.getElementById('auto-counter-box').style.display = 'none';
-          base = parseFloat(selectedRadio.value);
-          if (base === 20) selectedName = "Standard Shoot";
-          if (base === 40) selectedName = "Sports / Action";
-          if (base === 150) selectedName = "Real Estate";
+      radios.forEach(r => {
+        if (r.checked) {
+          if (r.value === "auto") {
+            autoSelected = true;
+            selectedName = "Automotive / Fleet";
+            const cars = parseInt(document.getElementById("car-count-input").value) || 10;
+            const sets = Math.ceil(cars / 10);
+            total += sets * 75;
+          } else {
+            total += parseFloat(r.value);
+            if (r.value === "20") selectedName = "Standard Shoot";
+            if (r.value === "40") selectedName = "Sports / Action";
+            if (r.value === "150") selectedName = "Real Estate";
+          }
         }
-      }
+      });
 
-      const extraLocs = parseInt(document.getElementById('extra-loc-count').value) || 0;
-      let total = base + (extraLocs * 10);
+      document.getElementById("auto-counter-box").style.display = autoSelected ? "block" : "none";
 
-      document.querySelectorAll('.pkg-addon:checked').forEach(cb => {
+      const extraLocs = parseInt(document.getElementById("extra-loc-count").value) || 0;
+      total += extraLocs * 10;
+
+      document.querySelectorAll(".pkg-addon:checked").forEach(cb => {
         total += parseFloat(cb.value);
       });
 
-      document.getElementById('pkg-total-val').innerText = total.toFixed(2);
-      document.getElementById('stat-calc-total').innerText = '$' + total.toFixed(2);
-      document.getElementById('stat-selected-name').innerText = selectedName;
-
-      document.getElementById('inv-tier-display').innerText = selectedName;
-      document.getElementById('inv-total-display').innerText = '$' + total.toFixed(2);
+      document.getElementById("pkg-total-val").innerText = total.toFixed(2);
+      document.getElementById("stat-calc-total").innerText = "$" + total.toFixed(2);
+      document.getElementById("stat-selected-name").innerText = selectedName;
     }
 
-    /* BOOKING CALENDAR */
-    let currentDate = new Date(2026, 6, 1); // July 2026
-    let calendarEvents = JSON.parse(localStorage.getItem('cal_events') || '[]');
-
+    // --- CALENDAR & BOOKINGS ---
     function renderCalendar() {
-      const year = currentDate.getFullYear();
-      const month = currentDate.getMonth();
+      const year = currDate.getFullYear();
+      const month = currDate.getMonth();
       const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-
-      document.getElementById('cal-month-year').innerText = `${monthNames[month]} ${year}`;
-      const grid = document.getElementById('calendar-body');
-      grid.innerHTML = '';
-
-      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-      days.forEach(d => {
-        const h = document.createElement('div');
-        h.className = 'cal-day-header';
-        h.innerText = d;
-        grid.appendChild(h);
-      });
+      
+      document.getElementById("cal-month-year").innerText = `${monthNames[month]} ${year}`;
+      document.getElementById("stat-booking-count").innerText = `${appState.events.length} Shoots`;
 
       const firstDay = new Date(year, month, 1).getDay();
       const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const grid = document.getElementById("calendar-body");
+      grid.innerHTML = "";
+
+      const dayHeaders = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+      dayHeaders.forEach(d => {
+        grid.innerHTML += `<div class="cal-day-header">${d}</div>`;
+      });
 
       for (let i = 0; i < firstDay; i++) {
-        const cell = document.createElement('div');
-        cell.className = 'cal-cell empty';
-        grid.appendChild(cell);
+        grid.innerHTML += `<div class="cal-cell empty"></div>`;
       }
-
-      let activeCount = 0;
 
       for (let day = 1; day <= daysInMonth; day++) {
-        const cell = document.createElement('div');
-        cell.className = 'cal-cell';
-        const formattedDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dayEvents = appState.events.filter(e => e.date === dateStr);
 
-        cell.innerHTML = `<div class="cal-num">${day}</div>`;
-
-        const dayEvents = calendarEvents.filter(e => e.date === formattedDate);
+        let eventsHtml = "";
         dayEvents.forEach((ev, idx) => {
-          activeCount++;
-          const tag = document.createElement('div');
-          tag.className = 'event-tag';
-          tag.innerHTML = `<span>${ev.client} (${ev.time})</span><button class="event-del-btn" onclick="deleteEvent('${ev.id}', event)">×</button>`;
-          cell.appendChild(tag);
+          eventsHtml += `
+            <div class="event-tag">
+              <span>${ev.client} (${ev.time})</span>
+              <button class="event-del-btn" onclick="deleteCalendarEvent(event, '${ev.id}')">×</button>
+            </div>`;
         });
 
-        cell.onclick = (e) => {
-          if (!e.target.classList.contains('event-del-btn')) {
-            openModal(formattedDate);
-          }
-        };
-
-        grid.appendChild(cell);
+        grid.innerHTML += `
+          <div class="cal-cell" onclick="quickSchedule('${dateStr}')">
+            <div class="cal-num">${day}</div>
+            ${eventsHtml}
+          </div>`;
       }
-
-      document.getElementById('stat-booking-count').innerText = `${activeCount} Shoots`;
     }
 
-    function prevMonth() { currentDate.setMonth(currentDate.getMonth() - 1); renderCalendar(); }
-    function nextMonth() { currentDate.setMonth(currentDate.getMonth() + 1); renderCalendar(); }
+    function prevMonth() { currDate.setMonth(currDate.getMonth() - 1); renderCalendar(); }
+    function nextMonth() { currDate.setMonth(currDate.getMonth() + 1); renderCalendar(); }
 
-    function openModal(dateStr = '') {
-      document.getElementById('event-modal').style.display = 'flex';
-      if (dateStr) document.getElementById('m-date').value = dateStr;
+    function openModal() { document.getElementById("event-modal").style.display = "flex"; }
+    function closeModal() { document.getElementById("event-modal").style.display = "none"; }
+
+    function quickSchedule(dateStr) {
+      document.getElementById("m-date").value = dateStr;
+      openModal();
     }
-    function closeModal() { document.getElementById('event-modal').style.display = 'none'; }
 
     function addCalendarEvent() {
-      const client = document.getElementById('m-client').value || "Client Shoot";
-      const date = document.getElementById('m-date').value;
-      const time = document.getElementById('m-time').value || "12:00 PM";
+      const client = document.getElementById("m-client").value.trim();
+      const date = document.getElementById("m-date").value;
+      const time = document.getElementById("m-time").value.trim();
 
-      if (!date) { alert("Please choose a shoot date."); return; }
+      if (!client || !date) { alert("Please enter a client name and date."); return; }
 
-      const newEv = { id: Date.now().toString(), client, date, time };
-      calendarEvents.push(newEv);
-      localStorage.setItem('cal_events', JSON.stringify(calendarEvents));
+      const newEvent = { id: Date.now().toString(), client, date, time: time || "All Day" };
+      appState.events.push(newEvent);
+      saveStateAndSync();
 
+      document.getElementById("m-client").value = "";
+      document.getElementById("m-time").value = "";
       closeModal();
-      document.getElementById('m-client').value = '';
       renderCalendar();
     }
 
-    function deleteEvent(id, e) {
+    function deleteCalendarEvent(e, id) {
       e.stopPropagation();
-      calendarEvents = calendarEvents.filter(ev => ev.id !== id);
-      localStorage.setItem('cal_events', JSON.stringify(calendarEvents));
+      appState.events = appState.events.filter(ev => ev.id !== id);
+      saveStateAndSync();
       renderCalendar();
     }
 
-    /* CLIENT MEDIA DIRECTORIES */
-    let photoDirectories = JSON.parse(localStorage.getItem('photo_dirs') || '{"Oklahoma City Fleet Shoot": []}');
-    let activeDirName = "Oklahoma City Fleet Shoot";
-
+    // --- CLIENT PORTFOLIOS & MEDIA DIRECTORY ---
     function triggerPhotoSelect() {
-      document.getElementById('file-upload-input').click();
+      const dirName = document.getElementById("dir-client-input").value.trim();
+      if (!dirName && !appState.activeDir) {
+        alert("Please enter a Directory / Client Name first!");
+        return;
+      }
+      document.getElementById("file-upload-input").click();
     }
 
-    function handleFileUpload(event) {
-      const files = event.target.files;
-      if (!files.length) return;
+    function handleFileUpload(e) {
+      const files = e.target.files;
+      if (!files || files.length === 0) return;
 
-      const customDir = document.getElementById('dir-client-input').value.trim();
-      const targetDir = customDir || activeDirName || "General Portfolio";
+      let dirName = document.getElementById("dir-client-input").value.trim() || appState.activeDir || "General Portfolio";
+      appState.activeDir = dirName;
 
-      if (!photoDirectories[targetDir]) {
-        photoDirectories[targetDir] = [];
-      }
+      if (!appState.galleries[dirName]) appState.galleries[dirName] = [];
 
+      let processed = 0;
       Array.from(files).forEach(file => {
         const reader = new FileReader();
-        reader.onload = function(e) {
-          photoDirectories[targetDir].push(e.target.result);
-          localStorage.setItem('photo_dirs', JSON.stringify(photoDirectories));
-          activeDirName = targetDir;
-          renderDirectories();
+        reader.onload = (event) => {
+          appState.galleries[dirName].push(event.target.result);
+          processed++;
+          if (processed === files.length) {
+            saveStateAndSync();
+            renderGalleries();
+            document.getElementById("dir-client-input").value = "";
+          }
         };
         reader.readAsDataURL(file);
       });
     }
 
-    function renderDirectories() {
-      const badgesContainer = document.getElementById('directory-badges-list');
-      badgesContainer.innerHTML = '';
+    function renderGalleries() {
+      const badgesContainer = document.getElementById("directory-badges-list");
+      badgesContainer.innerHTML = "";
 
-      const keys = Object.keys(photoDirectories);
-      if (!keys.length) {
-        badgesContainer.innerHTML = '<p style="color:var(--text-sub); font-size:0.85rem;">No directories created.</p>';
-        renderPhotos();
+      const keys = Object.keys(appState.galleries);
+      if (keys.length === 0) {
+        badgesContainer.innerHTML = `<p style="color: var(--text-sub); font-size: 0.85rem;">No directories created yet.</p>`;
+        document.getElementById("photo-grid-container").innerHTML = `<p style="color: var(--text-sub); font-size: 0.88rem; grid-column: 1 / -1;">No photos in this directory yet.</p>`;
         return;
       }
 
-      if (!keys.includes(activeDirName)) activeDirName = keys[0];
+      if (!appState.activeDir || !appState.galleries[appState.activeDir]) {
+        appState.activeDir = keys[0];
+      }
 
-      keys.forEach(key => {
-        const badge = document.createElement('div');
-        badge.className = `directory-badge ${key === activeDirName ? 'active' : ''}`;
-        badge.innerText = `${key} (${photoDirectories[key].length})`;
-        badge.onclick = () => { activeDirName = key; renderDirectories(); };
-        badgesContainer.appendChild(badge);
+      keys.forEach(k => {
+        const activeClass = (k === appState.activeDir) ? "active" : "";
+        badgesContainer.innerHTML += `
+          <div class="directory-badge ${activeClass}" onclick="selectDirectory('${k}')">
+            📁 ${k} (${appState.galleries[k].length})
+          </div>`;
       });
 
-      renderPhotos();
-    }
+      document.getElementById("active-dir-title").innerText = `Directory: ${appState.activeDir}`;
 
-    function renderPhotos() {
-      const container = document.getElementById('photo-grid-container');
-      container.innerHTML = '';
-      document.getElementById('active-dir-title').innerText = `Active Directory: ${activeDirName}`;
+      const grid = document.getElementById("photo-grid-container");
+      grid.innerHTML = "";
 
-      const photos = photoDirectories[activeDirName] || [];
-      if (!photos.length) {
-        container.innerHTML = '<p style="color: var(--text-sub); font-size: 0.88rem; grid-column: 1 / -1;">No photos in this directory yet. Upload photos above to build this album.</p>';
+      const currentPhotos = appState.galleries[appState.activeDir] || [];
+      if (currentPhotos.length === 0) {
+        grid.innerHTML = `<p style="color: var(--text-sub); font-size: 0.88rem; grid-column: 1 / -1;">No photos inside this directory.</p>`;
         return;
       }
 
-      photos.forEach((src, idx) => {
-        const card = document.createElement('div');
-        card.className = 'photo-card';
-        card.innerHTML = `
-          <img src="${src}" alt="Photo">
-          <div class="photo-actions">
-            <button class="photo-btn" onclick="openLightbox('${src}')">View</button>
-            <button class="photo-btn delete-btn" onclick="deletePhoto(${idx})">Delete</button>
-          </div>
-        `;
-        container.appendChild(card);
+      currentPhotos.forEach((imgData, idx) => {
+        grid.innerHTML += `
+          <div class="photo-card">
+            <img src="${imgData}" onclick="openLightbox('${imgData}')" alt="Photo">
+            <div class="photo-actions">
+              <button class="photo-btn" onclick="openLightbox('${imgData}')">View</button>
+              <button class="photo-btn delete-btn" onclick="deletePhoto(${idx})">Delete</button>
+            </div>
+          </div>`;
       });
     }
 
-    function deletePhoto(idx) {
-      photoDirectories[activeDirName].splice(idx, 1);
-      localStorage.setItem('photo_dirs', JSON.stringify(photoDirectories));
-      renderDirectories();
+    function selectDirectory(dir) {
+      appState.activeDir = dir;
+      renderGalleries();
     }
 
     function deleteActiveDirectory() {
-      if (confirm(`Are you sure you want to delete the directory "${activeDirName}" and all its photos?`)) {
-        delete photoDirectories[activeDirName];
-        localStorage.setItem('photo_dirs', JSON.stringify(photoDirectories));
-        activeDirName = Object.keys(photoDirectories)[0] || "";
-        renderDirectories();
+      if (!appState.activeDir) return;
+      if (confirm(`Are you sure you want to delete the "${appState.activeDir}" directory and all its images?`)) {
+        delete appState.galleries[appState.activeDir];
+        appState.activeDir = "";
+        saveStateAndSync();
+        renderGalleries();
+      }
+    }
+
+    function deletePhoto(idx) {
+      if (appState.activeDir && appState.galleries[appState.activeDir]) {
+        appState.galleries[appState.activeDir].splice(idx, 1);
+        saveStateAndSync();
+        renderGalleries();
       }
     }
 
     function openLightbox(src) {
-      document.getElementById('lightbox-img').src = src;
-      document.getElementById('lightbox').style.display = 'flex';
+      document.getElementById("lightbox-img").src = src;
+      document.getElementById("lightbox").style.display = "flex";
     }
-    function closeLightbox() { document.getElementById('lightbox').style.display = 'none'; }
 
-    /* CLIENT NOTES */
-    let clientNotes = JSON.parse(localStorage.getItem('client_notes') || '[]');
+    function closeLightbox() {
+      document.getElementById("lightbox").style.display = "none";
+    }
 
+    // --- CLIENT NOTES ---
     function renderNotes() {
-      const container = document.getElementById('notes-container');
-      container.innerHTML = '';
+      const container = document.getElementById("notes-container");
+      container.innerHTML = "";
 
-      if (!clientNotes.length) {
-        container.innerHTML = '<p style="color: var(--text-sub); font-size: 0.88rem;">No client notes recorded yet.</p>';
+      if (appState.notes.length === 0) {
+        container.innerHTML = `<p style="color: var(--text-sub); font-size: 0.88rem;">No client notes recorded yet.</p>`;
         return;
       }
 
-      clientNotes.forEach((note, idx) => {
-        const item = document.createElement('div');
-        item.className = 'note-item';
-        item.innerHTML = `
-          <span style="font-size:0.9rem;">${note}</span>
-          <button class="event-del-btn" style="color:var(--danger); padding:4px 8px;" onclick="deleteNote(${idx})">Delete</button>
-        `;
-        container.appendChild(item);
+      appState.notes.forEach((note, idx) => {
+        container.innerHTML += `
+          <div class="note-item">
+            <span>${note}</span>
+            <button class="cal-btn" style="color: var(--danger); border-color: rgba(239, 68, 68, 0.3); padding: 4px 10px;" onclick="deleteNote(${idx})">Delete</button>
+          </div>`;
       });
     }
 
     function addClientNote() {
-      const val = document.getElementById('note-input').value.trim();
-      if (val) {
-        clientNotes.push(val);
-        localStorage.setItem('client_notes', JSON.stringify(clientNotes));
-        document.getElementById('note-input').value = '';
-        renderNotes();
-      }
-    }
+      const input = document.getElementById("note-input");
+      const val = input.value.trim();
+      if (!val) return;
 
-    function deleteNote(idx) {
-      clientNotes.splice(idx, 1);
-      localStorage.setItem('client_notes', JSON.stringify(clientNotes));
+      appState.notes.push(val);
+      saveStateAndSync();
+      input.value = "";
       renderNotes();
     }
 
-    /* DATA BACKUP AND RESTORE UTILITIES */
+    function deleteNote(idx) {
+      appState.notes.splice(idx, 1);
+      saveStateAndSync();
+      renderNotes();
+    }
+
+    // --- SIGNATURE CANVAS ---
+    function initSignatureCanvas() {
+      const canvas = document.getElementById("sig-canvas");
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+      let drawing = false;
+
+      function resizeCanvas() {
+        canvas.width = canvas.parentElement.clientWidth || 300;
+        canvas.height = 100;
+      }
+      resizeCanvas();
+
+      canvas.addEventListener("mousedown", () => drawing = true);
+      canvas.addEventListener("mouseup", () => { drawing = false; ctx.beginPath(); });
+      canvas.addEventListener("mousemove", draw);
+
+      canvas.addEventListener("touchstart", (e) => { drawing = true; e.preventDefault(); });
+      canvas.addEventListener("touchend", () => { drawing = false; ctx.beginPath(); });
+      canvas.addEventListener("touchmove", (e) => {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const rect = canvas.getBoundingClientRect();
+        drawXY(touch.clientX - rect.left, touch.clientY - rect.top);
+      });
+
+      function draw(e) {
+        if (!drawing) return;
+        const rect = canvas.getBoundingClientRect();
+        drawXY(e.clientX - rect.left, e.clientY - rect.top);
+      }
+
+      function drawXY(x, y) {
+        ctx.lineWidth = 2;
+        ctx.lineCap = "round";
+        ctx.strokeStyle = "#000";
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+      }
+    }
+
+    function clearSignature() {
+      const canvas = document.getElementById("sig-canvas");
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    // --- BACKUP & RESTORE DATA ---
     function exportDataBackup() {
-      const backupData = {
-        cal_events: JSON.parse(localStorage.getItem('cal_events') || '[]'),
-        client_notes: JSON.parse(localStorage.getItem('client_notes') || '[]'),
-        photo_dirs: JSON.parse(localStorage.getItem('photo_dirs') || '{}'),
-        app_pin: localStorage.getItem('app_pin') || "0814"
-      };
-
-      const jsonStr = JSON.stringify(backupData, null, 2);
-      const blob = new Blob([jsonStr], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `prestige_app_backup_${new Date().toISOString().slice(0, 10)}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `prestige_backup_${new Date().toISOString().slice(0,10)}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
     }
 
     function triggerRestoreUpload() {
-      document.getElementById('restore-file-input').click();
+      document.getElementById("restore-file-input").click();
     }
 
-    function importDataBackup(event) {
-      const file = event.target.files[0];
+    function importDataBackup(e) {
+      const file = e.target.files[0];
       if (!file) return;
 
       const reader = new FileReader();
-      reader.onload = function(e) {
+      reader.onload = (event) => {
         try {
-          const importedData = JSON.parse(e.target.result);
-
-          if (importedData.cal_events) {
-            localStorage.setItem('cal_events', JSON.stringify(importedData.cal_events));
-            calendarEvents = importedData.cal_events;
-          }
-          if (importedData.client_notes) {
-            localStorage.setItem('client_notes', JSON.stringify(importedData.client_notes));
-            clientNotes = importedData.client_notes;
-          }
-          if (importedData.photo_dirs) {
-            localStorage.setItem('photo_dirs', JSON.stringify(importedData.photo_dirs));
-            photoDirectories = importedData.photo_dirs;
-            activeDirName = Object.keys(photoDirectories)[0] || "";
-          }
-          if (importedData.app_pin) {
-            localStorage.setItem('app_pin', importedData.app_pin);
-            currentPin = importedData.app_pin;
-          }
-
+          const importedData = JSON.parse(event.target.result);
+          appState = Object.assign(appState, importedData);
+          saveStateAndSync();
           renderCalendar();
-          renderDirectories();
           renderNotes();
-
-          alert("App data restored successfully!");
+          renderGalleries();
+          alert("Data backup successfully restored!");
         } catch (err) {
-          alert("Failed to read backup file. Please ensure it is a valid JSON file.");
+          alert("Error parsing backup JSON file.");
         }
       };
       reader.readAsText(file);
     }
-
-    /* SIGNATURE CANVAS FOR PRINT RELEASE */
-    const canvas = document.getElementById('sig-canvas');
-    const ctx = canvas.getContext('2d');
-    let isDrawing = false;
-
-    function resizeCanvas() {
-      if (!canvas || !canvas.parentElement) return;
-      const rect = canvas.parentElement.getBoundingClientRect();
-      const dpr = window.devicePixelRatio || 1;
-      
-      canvas.width = (rect.width - 24) * dpr;
-      canvas.height = 100 * dpr;
-      ctx.scale(dpr, dpr);
-    }
-    window.addEventListener('resize', resizeCanvas);
-    setTimeout(resizeCanvas, 200);
-
-    function startDraw(e) {
-      isDrawing = true;
-      ctx.beginPath();
-      const pos = getPos(e);
-      ctx.moveTo(pos.x, pos.y);
-    }
-
-    function draw(e) {
-      if (!isDrawing) return;
-      const pos = getPos(e);
-      ctx.lineWidth = 2;
-      ctx.lineCap = 'round';
-      ctx.strokeStyle = '#000000';
-      ctx.lineTo(pos.x, pos.y);
-      ctx.stroke();
-    }
-
-    function stopDraw() { isDrawing = false; }
-
-    function getPos(e) {
-      const rect = canvas.getBoundingClientRect();
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      return { x: clientX - rect.left, y: clientY - rect.top };
-    }
-
-    canvas.addEventListener('mousedown', startDraw);
-    canvas.addEventListener('mousemove', draw);
-    canvas.addEventListener('mouseup', stopDraw);
-    canvas.addEventListener('touchstart', startDraw);
-    canvas.addEventListener('touchmove', draw);
-    canvas.addEventListener('touchend', stopDraw);
-
-    function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
-
-    function printDocument() {
-      window.print();
-    }
-
-    /* INITIALIZATION */
-    const todayStr = new Date().toLocaleDateString('en-US');
-    document.getElementById('inv-date-field').value = todayStr;
-    document.getElementById('rel-date-field').value = todayStr;
-
-    calculatePackageTotal();
-    renderCalendar();
-    renderDirectories();
-    renderNotes();
   </script>
 </body>
 </html>
-<script>
-<!-- Firebase App (the core Firebase SDK) -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<!-- Firebase Realtime Database SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
-<script>
-  // Your web app's Firebase configuration
-  const firebaseConfig = {
-    apiKey: "AIzaSyBEmLZUiCyxh1KSCbwy59OdJjmGQwoeNFc",
-    authDomain: "prestige-app-10027.firebaseapp.com",
-    databaseURL: "https://prestige-app-10027-default-rtdb.firebaseio.com",
-    projectId: "prestige-app-10027",
-    storageBucket: "prestige-app-10027.firebasestorage.app",
-    messagingSenderId: "1023409177753",
-    appId: "1:1023409177753:web:037b2657c918c33ac3e408",
-    measurementId: "G-B9J6MS79WJ"
-  };
-
-  // Initialize Firebase
-  firebase.initializeApp(firebaseConfig);
-  const database = firebase.database();
-
-  // Reference to your app data node in the cloud
-  const appDataRef = database.ref("appData");
-
-  // 1. READ/LISTEN: Real-time Listener (Syncs changes automatically)
-  appDataRef.on("value", (snapshot) => {
-    const data = snapshot.val();
-    if (data) {
-      // Automatically updates local app state whenever data changes on any device
-      console.log("Cloud data updated:", data);
-      localStorage.setItem("prestige_app_data", JSON.stringify(data));
-      
-      // Call your app's refresh or UI update function here if needed
-      if (typeof renderApp === "function") {
-        renderApp();
-      }
-    }
-  });
-
-  // 2. WRITE: Function to save updates directly to Firebase
-  function saveToCloud(newData) {
-    appDataRef.set(newData).then(() => {
-      console.log("Data saved to cloud database!");
-    }).catch((error) => {
-      console.error("Error saving data:", error);
-    });
-  }
-</script>
-</body>
-</html>
-saveToCloud(YOUR_DATA_VARIABLE);
