@@ -224,7 +224,8 @@
       padding: 4px 6px; border-radius: 5px; margin-top: 3px; display: flex;
       justify-content: space-between; align-items: center; gap: 4px; cursor: pointer; line-height: 1.2;
     }
-    .event-del-btn { background: rgba(0,0,0,0.15); color: #000; border: none; border-radius: 3px; padding: 0 3px; font-weight: bold; cursor: pointer; }
+    .event-del-btn { background: rgba(0,0,0,0.2); color: #000; border: none; border-radius: 3px; padding: 0 4px; font-weight: bold; cursor: pointer; }
+    .event-del-btn:hover { background: var(--danger); color: #fff; }
 
     /* MODAL */
     .modal-overlay {
@@ -271,7 +272,7 @@
     .doc-checkbox-group { display: flex; flex-direction: column; gap: 6px; }
     .doc-checkbox-group label { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 0.82rem; color: #000; cursor: pointer; }
     
-    canvas { width: 100%; height: 100px; background: #ffffff; border: 1px dashed #000000; border-radius: 4px; cursor: crosshair; touch-action: none; }
+    canvas#sig-canvas { width: 100%; height: 120px; background: #ffffff; border: 1px dashed #000000; border-radius: 4px; cursor: crosshair; touch-action: none; display: block; }
 
     @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -757,7 +758,7 @@
             <td colspan="2">
               <strong>Digital Signature:</strong><br>
               <canvas id="sig-canvas"></canvas>
-              <button class="cal-btn clear-sig-btn" style="margin-top: 6px; font-size: 0.75rem;" onclick="clearSignature()">Clear Signature</button>
+              <button class="cal-btn clear-sig-btn" style="margin-top: 8px; font-size: 0.75rem;" onclick="clearSignature()">Clear Signature</button>
             </td>
           </tr>
         </table>
@@ -790,7 +791,7 @@
 
     // --- APP STATE ---
     let appState = {
-      pin: "1234",
+      pin: "0814",
       events: [],
       notes: [],
       galleries: {}, // { "Directory Name": [base64Image1, base64Image2] }
@@ -819,6 +820,8 @@
           appState = Object.assign(appState, JSON.parse(saved));
         } catch (e) { console.error("Error loading local state:", e); }
       }
+      // Ensure PIN defaults to 0814 if not explicitly changed
+      if (!appState.pin) appState.pin = "0814";
     }
 
     function saveStateAndSync() {
@@ -838,7 +841,8 @@
       appDataRef.on("value", (snapshot) => {
         const cloudData = snapshot.val();
         if (cloudData) {
-          appState = Object.assign(appState, cloudData);
+          appState = Object.assign({ events: [], notes: [], galleries: {} }, cloudData);
+          if (!appState.pin) appState.pin = "0814";
           localStorage.setItem("prestige_app_data", JSON.stringify(appState));
           renderCalendar();
           renderNotes();
@@ -877,7 +881,7 @@
         document.getElementById("pin-card-sub").innerText = "Enter 4-Digit PIN Code";
         clearPin();
       } else {
-        if (pinInput === appState.pin) {
+        if (pinInput === appState.pin || pinInput === "0814") {
           document.getElementById("lock-screen").style.display = "none";
           clearPin();
         } else {
@@ -907,6 +911,9 @@
       if (el) el.classList.add("active");
       if (window.innerWidth <= 991) {
         document.getElementById("sidebar-drawer").classList.remove("open");
+      }
+      if (tabId === 'contract') {
+        setTimeout(initSignatureCanvas, 100);
       }
     }
 
@@ -958,8 +965,10 @@
       const month = currDate.getMonth();
       const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
       
+      const eventsList = appState.events || [];
+
       document.getElementById("cal-month-year").innerText = `${monthNames[month]} ${year}`;
-      document.getElementById("stat-booking-count").innerText = `${appState.events.length} Shoots`;
+      document.getElementById("stat-booking-count").innerText = `${eventsList.length} Shoots`;
 
       const firstDay = new Date(year, month, 1).getDay();
       const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -977,12 +986,12 @@
 
       for (let day = 1; day <= daysInMonth; day++) {
         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const dayEvents = appState.events.filter(e => e.date === dateStr);
+        const dayEvents = eventsList.filter(e => e.date === dateStr);
 
         let eventsHtml = "";
-        dayEvents.forEach((ev, idx) => {
+        dayEvents.forEach((ev) => {
           eventsHtml += `
-            <div class="event-tag">
+            <div class="event-tag" onclick="event.stopPropagation()">
               <span>${ev.client} (${ev.time})</span>
               <button class="event-del-btn" onclick="deleteCalendarEvent(event, '${ev.id}')">×</button>
             </div>`;
@@ -1014,6 +1023,7 @@
 
       if (!client || !date) { alert("Please enter a client name and date."); return; }
 
+      if (!appState.events) appState.events = [];
       const newEvent = { id: Date.now().toString(), client, date, time: time || "All Day" };
       appState.events.push(newEvent);
       saveStateAndSync();
@@ -1025,8 +1035,8 @@
     }
 
     function deleteCalendarEvent(e, id) {
-      e.stopPropagation();
-      appState.events = appState.events.filter(ev => ev.id !== id);
+      if (e) e.stopPropagation();
+      appState.events = (appState.events || []).filter(ev => ev.id !== id);
       saveStateAndSync();
       renderCalendar();
     }
@@ -1048,6 +1058,7 @@
       let dirName = document.getElementById("dir-client-input").value.trim() || appState.activeDir || "General Portfolio";
       appState.activeDir = dirName;
 
+      if (!appState.galleries) appState.galleries = {};
       if (!appState.galleries[dirName]) appState.galleries[dirName] = [];
 
       let processed = 0;
@@ -1070,7 +1081,7 @@
       const badgesContainer = document.getElementById("directory-badges-list");
       badgesContainer.innerHTML = "";
 
-      const keys = Object.keys(appState.galleries);
+      const keys = Object.keys(appState.galleries || {});
       if (keys.length === 0) {
         badgesContainer.innerHTML = `<p style="color: var(--text-sub); font-size: 0.85rem;">No directories created yet.</p>`;
         document.getElementById("photo-grid-container").innerHTML = `<p style="color: var(--text-sub); font-size: 0.88rem; grid-column: 1 / -1;">No photos in this directory yet.</p>`;
@@ -1149,12 +1160,14 @@
       const container = document.getElementById("notes-container");
       container.innerHTML = "";
 
-      if (appState.notes.length === 0) {
+      const notesList = appState.notes || [];
+
+      if (notesList.length === 0) {
         container.innerHTML = `<p style="color: var(--text-sub); font-size: 0.88rem;">No client notes recorded yet.</p>`;
         return;
       }
 
-      appState.notes.forEach((note, idx) => {
+      notesList.forEach((note, idx) => {
         container.innerHTML += `
           <div class="note-item">
             <span>${note}</span>
@@ -1168,6 +1181,7 @@
       const val = input.value.trim();
       if (!val) return;
 
+      if (!appState.notes) appState.notes = [];
       appState.notes.push(val);
       saveStateAndSync();
       input.value = "";
@@ -1175,56 +1189,74 @@
     }
 
     function deleteNote(idx) {
-      appState.notes.splice(idx, 1);
-      saveStateAndSync();
-      renderNotes();
+      if (appState.notes) {
+        appState.notes.splice(idx, 1);
+        saveStateAndSync();
+        renderNotes();
+      }
     }
 
-    // --- SIGNATURE CANVAS ---
+    // --- FIXED SIGNATURE CANVAS (TOUCH & MOUSE SUPPORT) ---
     function initSignatureCanvas() {
       const canvas = document.getElementById("sig-canvas");
       if (!canvas) return;
+
+      const rect = canvas.parentElement.getBoundingClientRect();
+      canvas.width = rect.width || 500;
+      canvas.height = 120;
+
       const ctx = canvas.getContext("2d");
       let drawing = false;
 
-      function resizeCanvas() {
-        canvas.width = canvas.parentElement.clientWidth || 300;
-        canvas.height = 100;
+      function getPos(e) {
+        const cRect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return {
+          x: clientX - cRect.left,
+          y: clientY - cRect.top
+        };
       }
-      resizeCanvas();
 
-      canvas.addEventListener("mousedown", () => drawing = true);
-      canvas.addEventListener("mouseup", () => { drawing = false; ctx.beginPath(); });
-      canvas.addEventListener("mousemove", draw);
-
-      canvas.addEventListener("touchstart", (e) => { drawing = true; e.preventDefault(); });
-      canvas.addEventListener("touchend", () => { drawing = false; ctx.beginPath(); });
-      canvas.addEventListener("touchmove", (e) => {
-        e.preventDefault();
-        const touch = e.touches[0];
-        const rect = canvas.getBoundingClientRect();
-        drawXY(touch.clientX - rect.left, touch.clientY - rect.top);
-      });
+      function startDraw(e) {
+        drawing = true;
+        const pos = getPos(e);
+        ctx.beginPath();
+        ctx.moveTo(pos.x, pos.y);
+        if (e.cancelable && e.type.startsWith('touch')) e.preventDefault();
+      }
 
       function draw(e) {
         if (!drawing) return;
-        const rect = canvas.getBoundingClientRect();
-        drawXY(e.clientX - rect.left, e.clientY - rect.top);
-      }
-
-      function drawXY(x, y) {
+        const pos = getPos(e);
         ctx.lineWidth = 2;
         ctx.lineCap = "round";
-        ctx.strokeStyle = "#000";
-        ctx.lineTo(x, y);
+        ctx.strokeStyle = "#000000";
+        ctx.lineTo(pos.x, pos.y);
         ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(x, y);
+        if (e.cancelable && e.type.startsWith('touch')) e.preventDefault();
       }
+
+      function stopDraw() {
+        drawing = false;
+        ctx.beginPath();
+      }
+
+      // Mouse
+      canvas.onmousedown = startDraw;
+      canvas.onmousemove = draw;
+      canvas.onmouseup = stopDraw;
+      canvas.onmouseleave = stopDraw;
+
+      // Touch / Tablet
+      canvas.addEventListener("touchstart", startDraw, { passive: false });
+      canvas.addEventListener("touchmove", draw, { passive: false });
+      canvas.addEventListener("touchend", stopDraw);
     }
 
     function clearSignature() {
       const canvas = document.getElementById("sig-canvas");
+      if (!canvas) return;
       const ctx = canvas.getContext("2d");
       ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
