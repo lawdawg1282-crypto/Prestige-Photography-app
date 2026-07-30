@@ -663,6 +663,14 @@
           </label>
 
           <label class="tier-option">
+            <input type="radio" name="pkg_tier" value="150" onchange="calculatePackageTotal()">
+            <div>
+              <h4 style="font-size: 0.95rem;">Real Estate Package</h4>
+              <p style="font-size: 0.8rem; color: var(--text-sub);">$150.00 - Full property interior & exterior photography</p>
+            </div>
+          </label>
+
+          <label class="tier-option">
             <input type="radio" name="pkg_tier" value="auto" onchange="calculatePackageTotal()">
             <div>
               <h4 style="font-size: 0.95rem;">Automotive / Fleet Tiered Rates</h4>
@@ -1055,7 +1063,10 @@
             document.getElementById('auto-counter-box').style.display = 'block';
           } else {
             basePrice = parseFloat(r.value);
-            selectedName = r.parentElement.querySelector('h4').innerText + " Coverage";
+            selectedName = r.parentElement.querySelector('h4').innerText;
+            if (r.value !== '150') {
+              selectedName += " Coverage";
+            }
             mainQty = "1";
             document.getElementById('auto-counter-box').style.display = 'none';
           }
