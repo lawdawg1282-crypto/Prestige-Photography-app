@@ -8,7 +8,6 @@
   <!-- FIREBASE COMPAT SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
 
   <style>
     :root {
@@ -595,7 +594,7 @@
       <h2>PRESTIGE</h2>
       <p>PHOTOGRAPHY PORTAL</p>
       <div style="margin-top: 8px;">
-        <span class="status-badge">● Firebase Live Sync</span>
+        <span class="status-badge">● Firebase RTDB Live</span>
       </div>
     </div>
 
@@ -947,7 +946,6 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    const storage = firebase.storage();
 
     /* 2. GLOBAL STATE */
     let currentPin = "1234";
@@ -1000,7 +998,7 @@
         renderCalendar();
       });
 
-      // Sync Media Galleries
+      // Sync Media Galleries (RTDB Storage)
       db.ref('galleries').on('value', snapshot => {
         appData.galleries = { "General": [] };
         if (snapshot.exists()) {
@@ -1287,7 +1285,7 @@
       db.ref(`events/${id}`).remove();
     }
 
-    /* FIREBASE CLOUD STORAGE & GALLERY */
+    /* BULLETPROOF BASE64 FIREBASE GALLERY UPLOADER */
     function triggerPhotoSelect() {
       document.getElementById('file-upload-input').click();
     }
@@ -1298,26 +1296,21 @@
       if (!dirName) dirName = activeDirectory || "General";
 
       const uploadBtn = document.getElementById('upload-btn');
-      uploadBtn.innerText = "⏳ Uploading...";
+      uploadBtn.innerText = "⏳ Processing Images...";
       uploadBtn.disabled = true;
 
       Array.from(files).forEach(file => {
-        const fileRef = storage.ref(`galleries/${dirName}/${Date.now()}_${file.name}`);
-        fileRef.put(file).then(snapshot => {
-          return snapshot.ref.getDownloadURL();
-        }).then(downloadURL => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const base64String = e.target.result;
           db.ref(`galleries/${dirName}`).push({
-            src: downloadURL,
-            storagePath: fileRef.fullPath
+            src: base64String,
+            name: file.name
           });
           uploadBtn.innerText = "📷 Upload Photos";
           uploadBtn.disabled = false;
-        }).catch(err => {
-          console.error("Upload error:", err);
-          alert("Error uploading file to Firebase Storage.");
-          uploadBtn.innerText = "📷 Upload Photos";
-          uploadBtn.disabled = false;
-        });
+        };
+        reader.readAsDataURL(file);
       });
 
       document.getElementById('dir-client-input').value = '';
@@ -1360,19 +1353,16 @@
           <img src="${p.src}" alt="Photo">
           <div class="photo-actions">
             <button class="photo-btn" onclick="openLightbox('${p.src}')">View</button>
-            <button class="photo-btn delete-btn" onclick="deletePhoto('${p.id}', '${p.storagePath || ''}')">Delete</button>
+            <button class="photo-btn delete-btn" onclick="deletePhoto('${p.id}')">Delete</button>
           </div>
         `;
         grid.appendChild(card);
       });
     }
 
-    function deletePhoto(id, storagePath) {
-      if (confirm("Delete this photo permanently from Firebase?")) {
+    function deletePhoto(id) {
+      if (confirm("Delete this photo permanently?")) {
         db.ref(`galleries/${activeDirectory}/${id}`).remove();
-        if (storagePath) {
-          storage.ref(storagePath).delete().catch(err => console.log("Storage file clean warning", err));
-        }
       }
     }
 
