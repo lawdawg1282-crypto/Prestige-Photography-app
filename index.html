@@ -240,6 +240,7 @@
     /* FORMS & INPUTS */
     .form-group {
       margin-bottom: 1rem;
+      position: relative;
     }
 
     .form-group label {
@@ -276,6 +277,37 @@
 
     .action-btn:hover {
       background: var(--accent-hover);
+    }
+
+    /* AUTOCOMPLETE DROPDOWN */
+    .autocomplete-list {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: var(--card-bg);
+      border: 1px solid var(--accent);
+      border-radius: 6px;
+      max-height: 160px;
+      overflow-y: auto;
+      z-index: 1050;
+      display: none;
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5);
+    }
+
+    .autocomplete-item {
+      padding: 8px 12px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-main);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .autocomplete-item:hover {
+      background: var(--accent);
+      color: white;
     }
 
     /* CLIENT SPREADSHEET DIRECTORY */
@@ -364,7 +396,7 @@
     .cal-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
-      gap: 4px;
+      gap: 6px;
     }
 
     .cal-day-header {
@@ -377,40 +409,65 @@
     .cal-cell {
       background: var(--card-bg);
       border: 1px solid var(--border);
-      min-height: 70px;
-      padding: 4px;
-      border-radius: 4px;
+      min-height: 85px;
+      padding: 6px;
+      border-radius: 6px;
       font-size: 0.75rem;
       cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      transition: border-color 0.15s;
+    }
+
+    .cal-cell:hover {
+      border-color: var(--accent);
     }
 
     .cal-cell.empty {
       background: transparent;
       border: none;
+      cursor: default;
     }
 
     .cal-num {
       font-weight: 700;
       margin-bottom: 4px;
+      color: var(--text-sub);
     }
 
     .event-tag {
-      background: rgba(59, 130, 246, 0.2);
-      border-left: 2px solid var(--accent);
-      padding: 2px 4px;
-      border-radius: 2px;
-      margin-bottom: 2px;
-      font-size: 0.65rem;
+      background: rgba(59, 130, 246, 0.18);
+      border: 1px solid rgba(59, 130, 246, 0.4);
+      border-left: 3px solid var(--accent);
+      padding: 4px 6px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .event-tag:hover {
+      background: rgba(59, 130, 246, 0.3);
+    }
+
+    .event-tag-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      font-weight: 700;
+      color: #60a5fa;
     }
 
-    .event-del-btn {
-      background: none;
-      border: none;
-      color: var(--danger);
-      cursor: pointer;
+    .event-tag-client {
+      font-weight: 600;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     /* MEDIA & DIRECTORY STORAGE */
@@ -552,7 +609,7 @@
       border-radius: 8px;
       padding: 1.5rem;
       width: 90%;
-      max-width: 450px;
+      max-width: 480px;
     }
 
     /* STATUS BADGE */
@@ -827,7 +884,10 @@
     <!-- SECTION 4: BOOKING CALENDAR -->
     <div id="calendar" class="content-section">
       <div class="section-header">
-        <h1>Booking Calendar Scheduler</h1>
+        <div>
+          <h1>Booking Calendar Scheduler</h1>
+          <p style="font-size: 0.85rem; color: var(--text-sub);">Schedule shoots with full contact details synced directly to your Client Directory.</p>
+        </div>
         <button class="action-btn" onclick="openModal()">+ Schedule Shoot</button>
       </div>
 
@@ -1030,25 +1090,88 @@
     </div>
   </div>
 
-  <!-- EVENT BOOKING MODAL -->
+  <!-- UPGRADED EVENT BOOKING MODAL (WITH FULL CLIENT AUTOCREATE / AUTOFILL) -->
   <div class="modal-overlay" id="event-modal">
     <div class="modal-box">
-      <h3 style="margin-bottom: 1rem;">Schedule New Session</h3>
+      <h3 style="margin-bottom: 1rem;">Schedule Shoot & Sync Client</h3>
+      
       <div class="form-group">
-        <label>Client / Agency Name</label>
-        <input type="text" id="m-client" placeholder="e.g. City Police Fleet Shoot">
+        <label>Client / Agency Name (Type to auto-complete from directory)</label>
+        <input type="text" id="m-client" placeholder="e.g. City Police Fleet Shoot" autocomplete="off" oninput="showClientSuggestions(this.value)">
+        <div id="client-autocomplete-list" class="autocomplete-list"></div>
       </div>
+
       <div class="form-group">
-        <label>Date</label>
-        <input type="date" id="m-date">
+        <label>Shoot Location / Client Address</label>
+        <input type="text" id="m-address" placeholder="e.g. 100 N Broadway, Oklahoma City">
       </div>
-      <div class="form-group">
-        <label>Time</label>
-        <input type="text" id="m-time" placeholder="e.g. 2:00 PM">
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div class="form-group">
+          <label>Contact Phone</label>
+          <input type="text" id="m-phone" placeholder="(405) 000-0000">
+        </div>
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="text" id="m-email" placeholder="client@agency.org">
+        </div>
       </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div class="form-group">
+          <label>Shoot Date</label>
+          <input type="date" id="m-date">
+        </div>
+        <div class="form-group">
+          <label>Shoot Time</label>
+          <input type="text" id="m-time" placeholder="e.g. 2:00 PM">
+        </div>
+      </div>
+
+      <p style="font-size: 0.75rem; color: #60a5fa; margin-top: 4px;">
+        ℹ️ Tip: Entering a new client name automatically creates a record in your Client Directory!
+      </p>
+
       <div style="display: flex; gap: 8px; margin-top: 1.5rem; justify-content: flex-end;">
         <button class="sm-btn" onclick="closeModal()">Cancel</button>
         <button class="action-btn" onclick="addCalendarEvent()">Save Booking</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EVENT DETAILS VIEW MODAL -->
+  <div class="modal-overlay" id="event-details-modal">
+    <div class="modal-box">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+        <div>
+          <span class="badge-pill badge-blue" id="ed-time-badge" style="margin-bottom: 6px;">Shoot Time</span>
+          <h3 id="ed-client-name" style="font-size: 1.25rem;">Client Name</h3>
+        </div>
+        <button class="sm-btn" onclick="closeEventDetailsModal()">✕</button>
+      </div>
+
+      <div style="background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px; font-size: 0.88rem; display: flex; flex-direction: column; gap: 8px;">
+        <div>
+          <span style="color: var(--text-sub); font-size: 0.75rem; display: block;">SHOOT DATE:</span>
+          <strong id="ed-date">Date</strong>
+        </div>
+        <div>
+          <span style="color: var(--text-sub); font-size: 0.75rem; display: block;">LOCATION / ADDRESS:</span>
+          <span id="ed-address">No address provided</span>
+        </div>
+        <div>
+          <span style="color: var(--text-sub); font-size: 0.75rem; display: block;">CONTACT PHONE:</span>
+          <span id="ed-phone">No phone provided</span>
+        </div>
+        <div>
+          <span style="color: var(--text-sub); font-size: 0.75rem; display: block;">EMAIL ADDRESS:</span>
+          <span id="ed-email">No email provided</span>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 8px; margin-top: 1.5rem; justify-content: space-between;">
+        <button class="sm-btn" onclick="jumpToDirectoryFromBooking()" style="color: #60a5fa; border-color: rgba(59,130,246,0.4);">📷 Open Photo Directory</button>
+        <button class="action-btn" onclick="deleteEventFromDetails()" style="background: var(--danger);">Cancel / Delete Shoot</button>
       </div>
     </div>
   </div>
@@ -1085,6 +1208,8 @@
     let activeDirectory = "General";
     let calMonth = new Date().getMonth();
     let calYear = new Date().getFullYear();
+    let selectedEventIdForDetails = null;
+    let selectedClientNameForDetails = null;
 
     /* 3. FIREBASE REAL-TIME LISTENERS */
     window.addEventListener('DOMContentLoaded', () => {
@@ -1134,7 +1259,7 @@
           });
         }
         renderCalendar();
-        renderClientSheet(); // Refresh client next booking state
+        renderClientSheet();
       });
 
       // Sync Media Galleries
@@ -1152,6 +1277,13 @@
         renderDirectories();
         renderGallery();
         renderClientSheet();
+      });
+
+      // Close autocomplete on click outside
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('#m-client') && !e.target.closest('#client-autocomplete-list')) {
+          document.getElementById('client-autocomplete-list').style.display = 'none';
+        }
       });
     });
 
@@ -1254,12 +1386,12 @@
       }
 
       filtered.forEach(c => {
-        // Calculate Next Booking
+        // Calculate Next Booking directly from rich events
         const clientEvents = appData.events.filter(e => e.client && e.client.toLowerCase() === (c.name || '').toLowerCase());
         clientEvents.sort((a,b) => new Date(a.date) - new Date(b.date));
         const upcoming = clientEvents.find(e => new Date(e.date) >= new Date().setHours(0,0,0,0));
         const nextBookingBadge = upcoming 
-          ? `<span class="badge-pill badge-green">📅 ${upcoming.date}</span>` 
+          ? `<span class="badge-pill badge-green" style="cursor:pointer;" onclick="openEventDetailsModal('${upcoming.id}')" title="Click to view booking">📅 ${upcoming.date} (${upcoming.time || '12:00 PM'})</span>` 
           : `<span class="badge-pill badge-blue">None Scheduled</span>`;
 
         const tr = document.createElement('tr');
@@ -1425,7 +1557,7 @@
       calculateInvoiceTotals();
     }
 
-    /* CALENDAR SCHEDULER */
+    /* CALENDAR SCHEDULER & CLIENT SYNC ENGINE */
     function renderCalendar() {
       const calBody = document.getElementById('calendar-body');
       if (!calBody) return;
@@ -1467,7 +1599,18 @@
           appData.events.filter(e => e.date === dateStr).forEach(e => {
             const tag = document.createElement('div');
             tag.className = 'event-tag';
-            tag.innerHTML = `<span>${e.time} ${e.client}</span><button class="event-del-btn" onclick="event.stopPropagation(); deleteEvent('${e.id}')">×</button>`;
+            tag.onclick = (evt) => {
+              evt.stopPropagation();
+              openEventDetailsModal(e.id);
+            };
+
+            tag.innerHTML = `
+              <div class="event-tag-header">
+                <span>🕒 ${e.time || '12:00 PM'}</span>
+                <span>ℹ️</span>
+              </div>
+              <div class="event-tag-client">${e.client}</div>
+            `;
             cell.appendChild(tag);
           });
         }
@@ -1503,11 +1646,54 @@
     function closeModal() {
       document.getElementById('event-modal').style.display = 'none';
       document.getElementById('m-client').value = '';
+      document.getElementById('m-address').value = '';
+      document.getElementById('m-phone').value = '';
+      document.getElementById('m-email').value = '';
       document.getElementById('m-time').value = '';
+      document.getElementById('client-autocomplete-list').style.display = 'none';
     }
 
+    /* AUTOCOMPLETE & AUTOFILL FROM DIRECTORY */
+    function showClientSuggestions(query) {
+      const list = document.getElementById('client-autocomplete-list');
+      if (!list) return;
+      list.innerHTML = '';
+      if (!query || query.trim().length === 0) {
+        list.style.display = 'none';
+        return;
+      }
+
+      const q = query.toLowerCase();
+      const matches = appData.clients.filter(c => (c.name || '').toLowerCase().includes(q));
+
+      if (matches.length === 0) {
+        list.style.display = 'none';
+        return;
+      }
+
+      matches.forEach(c => {
+        const item = document.createElement('div');
+        item.className = 'autocomplete-item';
+        item.innerHTML = `<strong>${c.name}</strong> <span style="color:var(--text-sub);">${c.phone || ''}</span>`;
+        item.onclick = () => {
+          document.getElementById('m-client').value = c.name || '';
+          document.getElementById('m-address').value = c.address || '';
+          document.getElementById('m-phone').value = c.phone || '';
+          document.getElementById('m-email').value = c.email || '';
+          list.style.display = 'none';
+        };
+        list.appendChild(item);
+      });
+
+      list.style.display = 'block';
+    }
+
+    /* SAVE EVENT WITH SYNC TO CLIENT DIRECTORY */
     function addCalendarEvent() {
       const client = document.getElementById('m-client').value.trim();
+      const address = document.getElementById('m-address').value.trim();
+      const phone = document.getElementById('m-phone').value.trim();
+      const email = document.getElementById('m-email').value.trim();
       const date = document.getElementById('m-date').value;
       const time = document.getElementById('m-time').value.trim() || '12:00 PM';
 
@@ -1516,12 +1702,33 @@
         return;
       }
 
+      // 1. Check if client exists in directory; if not, create them automatically!
+      const existingClient = appData.clients.find(c => (c.name || '').toLowerCase() === client.toLowerCase());
+      if (!existingClient) {
+        db.ref('clients').push({
+          name: client,
+          address: address,
+          phone: phone,
+          email: email
+        });
+      } else {
+        // Optionally update contact fields if they were missing before
+        if (address && !existingClient.address) db.ref(`clients/${existingClient.id}/address`).set(address);
+        if (phone && !existingClient.phone) db.ref(`clients/${existingClient.id}/phone`).set(phone);
+        if (email && !existingClient.email) db.ref(`clients/${existingClient.id}/email`).set(email);
+      }
+
+      // 2. Save full rich event to Firebase
       db.ref('events').push({
         client: client,
+        address: address,
+        phone: phone,
+        email: email,
         date: date,
         time: time
       });
 
+      // Autofill invoice and release names
       const invClient = document.getElementById('inv-client-name');
       const relClient = document.getElementById('rel-client-name');
       if (invClient && !invClient.value) invClient.value = client;
@@ -1530,8 +1737,45 @@
       closeModal();
     }
 
-    function deleteEvent(id) {
-      db.ref(`events/${id}`).remove();
+    /* EVENT DETAILS POPUP MODAL */
+    function openEventDetailsModal(eventId) {
+      const eventObj = appData.events.find(e => e.id === eventId);
+      if (!eventObj) return;
+
+      selectedEventIdForDetails = eventId;
+      selectedClientNameForDetails = eventObj.client;
+
+      // Check if client record has richer address info if event was saved simply
+      const clientProfile = appData.clients.find(c => (c.name || '').toLowerCase() === (eventObj.client || '').toLowerCase()) || {};
+
+      document.getElementById('ed-client-name').innerText = eventObj.client;
+      document.getElementById('ed-time-badge').innerText = `🕒 ${eventObj.time || '12:00 PM'}`;
+      document.getElementById('ed-date').innerText = eventObj.date || 'No date set';
+      document.getElementById('ed-address').innerText = eventObj.address || clientProfile.address || 'No address provided';
+      document.getElementById('ed-phone').innerText = eventObj.phone || clientProfile.phone || 'No phone provided';
+      document.getElementById('ed-email').innerText = eventObj.email || clientProfile.email || 'No email provided';
+
+      document.getElementById('event-details-modal').style.display = 'flex';
+    }
+
+    function closeEventDetailsModal() {
+      document.getElementById('event-details-modal').style.display = 'none';
+      selectedEventIdForDetails = null;
+      selectedClientNameForDetails = null;
+    }
+
+    function deleteEventFromDetails() {
+      if (!selectedEventIdForDetails) return;
+      if (confirm("Are you sure you want to remove this shoot from your calendar?")) {
+        db.ref(`events/${selectedEventIdForDetails}`).remove();
+        closeEventDetailsModal();
+      }
+    }
+
+    function jumpToDirectoryFromBooking() {
+      if (!selectedClientNameForDetails) return;
+      closeEventDetailsModal();
+      openClientDirectoryFolder(selectedClientNameForDetails);
     }
 
     /* BASE64 FIREBASE GALLERY UPLOADER */
