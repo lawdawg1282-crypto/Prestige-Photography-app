@@ -1365,7 +1365,7 @@
       document.getElementById('sidebar-drawer').classList.toggle('open');
     }
 
-    /* CLIENT DIRECTORY SPREADSHEET ENGINE */
+    /* CLIENT DIRECTORY SPREADSHEET ENGINE - FIXED FUZZY MATCHING */
     function renderClientSheet() {
       const body = document.getElementById('client-sheet-body');
       if (!body) return;
@@ -1386,10 +1386,27 @@
       }
 
       filtered.forEach(c => {
-        // Calculate Next Booking directly from rich events
-        const clientEvents = appData.events.filter(e => e.client && e.client.toLowerCase() === (c.name || '').toLowerCase());
-        clientEvents.sort((a,b) => new Date(a.date) - new Date(b.date));
-        const upcoming = clientEvents.find(e => new Date(e.date) >= new Date().setHours(0,0,0,0));
+        const cName = (c.name || '').trim().toLowerCase();
+        const cPhone = (c.phone || '').trim();
+        const cEmail = (c.email || '').trim().toLowerCase();
+
+        // Robust matching: Check if trimmed Name, Phone, or Email matches any event
+        const clientEvents = appData.events.filter(e => {
+          const eName = (e.client || '').trim().toLowerCase();
+          const ePhone = (e.phone || '').trim();
+          const eEmail = (e.email || '').trim().toLowerCase();
+          
+          return (eName && eName === cName) ||
+                 (cPhone && ePhone && ePhone === cPhone) ||
+                 (cEmail && eEmail && eEmail === cEmail);
+        });
+
+        clientEvents.sort((a, b) => new Date(a.date) - new Date(b.date));
+        
+        // Match any upcoming shoot today or in the future
+        const todayStr = new Date().toISOString().split('T')[0];
+        const upcoming = clientEvents.find(e => e.date >= todayStr) || clientEvents[clientEvents.length - 1];
+
         const nextBookingBadge = upcoming 
           ? `<span class="badge-pill badge-green" style="cursor:pointer;" onclick="openEventDetailsModal('${upcoming.id}')" title="Click to view booking">📅 ${upcoming.date} (${upcoming.time || '12:00 PM'})</span>` 
           : `<span class="badge-pill badge-blue">None Scheduled</span>`;
@@ -1421,7 +1438,7 @@
     }
 
     function updateClientField(id, field, value) {
-      db.ref(`clients/${id}/${field}`).set(value);
+      db.ref(`clients/${id}/${field}`).set(value.trim());
     }
 
     function openAddClientModal() {
@@ -1663,7 +1680,7 @@
         return;
       }
 
-      const q = query.toLowerCase();
+      const q = query.toLowerCase().trim();
       const matches = appData.clients.filter(c => (c.name || '').toLowerCase().includes(q));
 
       if (matches.length === 0) {
@@ -1688,7 +1705,7 @@
       list.style.display = 'block';
     }
 
-    /* SAVE EVENT WITH SYNC TO CLIENT DIRECTORY */
+    /* SAVE EVENT WITH ROBUST SYNC TO CLIENT DIRECTORY */
     function addCalendarEvent() {
       const client = document.getElementById('m-client').value.trim();
       const address = document.getElementById('m-address').value.trim();
@@ -1702,8 +1719,8 @@
         return;
       }
 
-      // 1. Check if client exists in directory; if not, create them automatically!
-      const existingClient = appData.clients.find(c => (c.name || '').toLowerCase() === client.toLowerCase());
+      // 1. Check if client exists (case and space insensitive check)
+      const existingClient = appData.clients.find(c => (c.name || '').trim().toLowerCase() === client.toLowerCase());
       if (!existingClient) {
         db.ref('clients').push({
           name: client,
@@ -1712,7 +1729,7 @@
           email: email
         });
       } else {
-        // Optionally update contact fields if they were missing before
+        // Backfill missing contact info
         if (address && !existingClient.address) db.ref(`clients/${existingClient.id}/address`).set(address);
         if (phone && !existingClient.phone) db.ref(`clients/${existingClient.id}/phone`).set(phone);
         if (email && !existingClient.email) db.ref(`clients/${existingClient.id}/email`).set(email);
@@ -1745,8 +1762,7 @@
       selectedEventIdForDetails = eventId;
       selectedClientNameForDetails = eventObj.client;
 
-      // Check if client record has richer address info if event was saved simply
-      const clientProfile = appData.clients.find(c => (c.name || '').toLowerCase() === (eventObj.client || '').toLowerCase()) || {};
+      const clientProfile = appData.clients.find(c => (c.name || '').trim().toLowerCase() === (eventObj.client || '').trim().toLowerCase()) || {};
 
       document.getElementById('ed-client-name').innerText = eventObj.client;
       document.getElementById('ed-time-badge').innerText = `🕒 ${eventObj.time || '12:00 PM'}`;
