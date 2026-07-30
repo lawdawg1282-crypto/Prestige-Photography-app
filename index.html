@@ -1287,3 +1287,56 @@
   </script>
 </body>
 </html>
+<script>
+<!-- Firebase App (the core Firebase SDK) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<!-- Firebase Realtime Database SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<script>
+  // Your web app's Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyBEmLZUiCyxh1KSCbwy59OdJjmGQwoeNFc",
+    authDomain: "prestige-app-10027.firebaseapp.com",
+    databaseURL: "https://prestige-app-10027-default-rtdb.firebaseio.com",
+    projectId: "prestige-app-10027",
+    storageBucket: "prestige-app-10027.firebasestorage.app",
+    messagingSenderId: "1023409177753",
+    appId: "1:1023409177753:web:037b2657c918c33ac3e408",
+    measurementId: "G-B9J6MS79WJ"
+  };
+
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  const database = firebase.database();
+
+  // Reference to your app data node in the cloud
+  const appDataRef = database.ref("appData");
+
+  // 1. READ/LISTEN: Real-time Listener (Syncs changes automatically)
+  appDataRef.on("value", (snapshot) => {
+    const data = snapshot.val();
+    if (data) {
+      // Automatically updates local app state whenever data changes on any device
+      console.log("Cloud data updated:", data);
+      localStorage.setItem("prestige_app_data", JSON.stringify(data));
+      
+      // Call your app's refresh or UI update function here if needed
+      if (typeof renderApp === "function") {
+        renderApp();
+      }
+    }
+  });
+
+  // 2. WRITE: Function to save updates directly to Firebase
+  function saveToCloud(newData) {
+    appDataRef.set(newData).then(() => {
+      console.log("Data saved to cloud database!");
+    }).catch((error) => {
+      console.error("Error saving data:", error);
+    });
+  }
+</script>
+</body>
+</html>
+saveToCloud(YOUR_DATA_VARIABLE);
