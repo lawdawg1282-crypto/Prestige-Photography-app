@@ -1,4 +1,754 @@
-</div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prestige Photography - Management Portal</title>
+  <style>
+    :root {
+      --bg-dark: #0a0c10;
+      --panel-bg: #12161f;
+      --card-bg: #1a202c;
+      --border: #2d3748;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --text-main: #f3f4f6;
+      --text-sub: #9ca3af;
+      --danger: #ef4444;
+      --success: #10b981;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      display: flex;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* SECURITY LOCK OVERLAY */
+    #lock-screen {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 12, 16, 0.98);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(10px);
+    }
+
+    .lock-box {
+      background: var(--panel-bg);
+      border: 1px solid var(--border);
+      padding: 2.5rem;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+      max-width: 360px;
+      width: 90%;
+    }
+
+    .pin-display {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin: 1.5rem 0;
+    }
+
+    .pin-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      transition: all 0.2s;
+    }
+
+    .pin-dot.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      box-shadow: 0 0 10px var(--accent);
+    }
+
+    .numpad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .num-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 14px;
+      border-radius: 8px;
+      font-size: 1.2rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .num-btn:hover {
+      background: var(--border);
+    }
+
+    /* LAYOUT & SIDEBAR */
+    sidebar {
+      width: 260px;
+      background: var(--panel-bg);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 1.5rem 1rem;
+      transition: transform 0.3s ease;
+    }
+
+    .brand {
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 1.5rem;
+    }
+
+    .brand h2 {
+      font-size: 1.2rem;
+      letter-spacing: 2px;
+      font-weight: 800;
+    }
+
+    .brand p {
+      font-size: 0.75rem;
+      color: var(--accent);
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+
+    .nav-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+    }
+
+    .nav-item {
+      padding: 10px 14px;
+      border-radius: 6px;
+      color: var(--text-sub);
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.2s;
+    }
+
+    .nav-item:hover, .nav-item.active {
+      background: var(--accent);
+      color: white;
+    }
+
+    .sidebar-footer {
+      border-top: 1px solid var(--border);
+      padding-top: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .sm-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-sub);
+      padding: 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+
+    .sm-btn:hover {
+      background: var(--card-bg);
+      color: var(--text-main);
+    }
+
+    /* MAIN CONTENT */
+    main {
+      flex: 1;
+      padding: 2rem;
+      overflow-y: auto;
+      height: 100vh;
+    }
+
+    .mobile-header {
+      display: none;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem;
+      background: var(--panel-bg);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .content-section {
+      display: none;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .content-section.active {
+      display: block;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .section-header h1 {
+      font-size: 1.5rem;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .card {
+      background: var(--panel-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem;
+    }
+
+    .card h3 {
+      font-size: 1rem;
+      margin-bottom: 1rem;
+      color: var(--text-main);
+    }
+
+    /* FORMS & INPUTS */
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--text-sub);
+      margin-bottom: 4px;
+    }
+
+    input[type="text"], input[type="number"], input[type="date"], select, textarea {
+      width: 100%;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 10px;
+      border-radius: 6px;
+      outline: none;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--accent);
+    }
+
+    .action-btn {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+
+    .action-btn:hover {
+      background: var(--accent-hover);
+    }
+
+    /* PACKAGE ESTIMATOR CARDS */
+    .tier-option {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .tier-option input[type="radio"] {
+      accent-color: var(--accent);
+    }
+
+    /* CALENDAR SCHEDULER */
+    .cal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+    }
+
+    .cal-day-header {
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--text-sub);
+      padding: 6px;
+    }
+
+    .cal-cell {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      min-height: 70px;
+      padding: 4px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+
+    .cal-cell.empty {
+      background: transparent;
+      border: none;
+    }
+
+    .cal-num {
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .event-tag {
+      background: rgba(59, 130, 246, 0.2);
+      border-left: 2px solid var(--accent);
+      padding: 2px 4px;
+      border-radius: 2px;
+      margin-bottom: 2px;
+      font-size: 0.65rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .event-del-btn {
+      background: none;
+      border: none;
+      color: var(--danger);
+      cursor: pointer;
+    }
+
+    /* MEDIA & DIRECTORY STORAGE */
+    .dir-badges {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+
+    .directory-badge {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+
+    .directory-badge.active {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .photo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 12px;
+    }
+
+    .photo-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .photo-card img {
+      width: 100%;
+      height: 100px;
+      object-fit: cover;
+    }
+
+    .photo-actions {
+      display: flex;
+      padding: 4px;
+      gap: 4px;
+    }
+
+    .photo-btn {
+      flex: 1;
+      background: var(--panel-bg);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 4px;
+      font-size: 0.7rem;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .photo-btn.delete-btn {
+      color: var(--danger);
+    }
+
+    /* DOCUMENT SHEETS (INVOICE & CONTRACT) */
+    .document-container {
+      background: white;
+      color: black;
+      padding: 2rem;
+      border-radius: 8px;
+      margin-top: 1rem;
+    }
+
+    .doc-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+
+    .doc-table th, .doc-table td {
+      border: 1px solid #ddd;
+      padding: 8px 12px;
+      font-size: 0.85rem;
+    }
+
+    .doc-table th {
+      background: #f4f4f4;
+    }
+
+    .doc-logo-cell {
+      background: #000;
+      color: white;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .doc-header-title {
+      font-weight: 800;
+      font-size: 1.2rem;
+      letter-spacing: 2px;
+      text-align: center;
+    }
+
+    .doc-input-inline {
+      border: none;
+      border-bottom: 1px solid #999;
+      background: transparent;
+      color: black;
+      padding: 2px 4px;
+      font-weight: 600;
+      border-radius: 0;
+    }
+
+    #sig-canvas {
+      border: 1px dashed #666;
+      background: #fafafa;
+      width: 100%;
+      height: 120px;
+      border-radius: 4px;
+      cursor: crosshair;
+    }
+
+    /* MODAL */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal-box {
+      background: var(--panel-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      width: 90%;
+      max-width: 400px;
+    }
+
+    /* PRINT STYLES */
+    @media print {
+      sidebar, .section-header, .mobile-header, #lock-screen {
+        display: none !important;
+      }
+      main {
+        padding: 0;
+        height: auto;
+        overflow: visible;
+      }
+      .content-section {
+        display: none !important;
+      }
+      .content-section.active {
+        display: block !important;
+      }
+      .document-container {
+        padding: 0;
+        border: none;
+      }
+    }
+
+    @media (max-width: 991px) {
+      body {
+        flex-direction: column;
+      }
+      sidebar {
+        position: fixed;
+        inset: 0 auto 0 0;
+        z-index: 500;
+        transform: translateX(-100%);
+      }
+      sidebar.open {
+        transform: translateX(0);
+      }
+      .mobile-header {
+        display: flex;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SECURITY LOCK OVERLAY -->
+  <div id="lock-screen">
+    <div class="lock-box">
+      <h2>PRESTIGE SYSTEM</h2>
+      <p style="color: var(--text-sub); font-size: 0.8rem; margin-top: 4px;">Enter PIN Access Code</p>
+      
+      <div class="pin-display">
+        <div class="pin-dot" id="dot1"></div>
+        <div class="pin-dot" id="dot2"></div>
+        <div class="pin-dot" id="dot3"></div>
+        <div class="pin-dot" id="dot4"></div>
+      </div>
+
+      <div class="numpad">
+        <button class="num-btn" onclick="enterDigit('1')">1</button>
+        <button class="num-btn" onclick="enterDigit('2')">2</button>
+        <button class="num-btn" onclick="enterDigit('3')">3</button>
+        <button class="num-btn" onclick="enterDigit('4')">4</button>
+        <button class="num-btn" onclick="enterDigit('5')">5</button>
+        <button class="num-btn" onclick="enterDigit('6')">6</button>
+        <button class="num-btn" onclick="enterDigit('7')">7</button>
+        <button class="num-btn" onclick="enterDigit('8')">8</button>
+        <button class="num-btn" onclick="enterDigit('9')">9</button>
+        <button class="num-btn" onclick="clearPin()" style="color: var(--danger)">C</button>
+        <button class="num-btn" onclick="enterDigit('0')">0</button>
+        <button class="num-btn" onclick="verifyPin()" style="color: var(--success)">✓</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MOBILE HEADER -->
+  <div class="mobile-header">
+    <div style="font-weight: 800; letter-spacing: 1px;">PRESTIGE MEDIA</div>
+    <button class="sm-btn" onclick="toggleMobileSidebar()">☰ Menu</button>
+  </div>
+
+  <!-- NAVIGATION SIDEBAR -->
+  <sidebar id="sidebar-drawer">
+    <div class="brand">
+      <h2>PRESTIGE</h2>
+      <p>PHOTOGRAPHY PORTAL</p>
+    </div>
+
+    <ul class="nav-list">
+      <li class="nav-item active" onclick="switchTab('dashboard', this)">📊 Dashboard</li>
+      <li class="nav-item" onclick="switchTab('packages', this)">🏷️ Package Estimator</li>
+      <li class="nav-item" onclick="switchTab('calendar', this)">📅 Booking Calendar</li>
+      <li class="nav-item" onclick="switchTab('directory', this)">📁 Photo Directory</li>
+      <li class="nav-item" onclick="switchTab('invoice', this)">🧾 Invoice Generator</li>
+      <li class="nav-item" onclick="switchTab('contract', this)">🖋️ Print Release Form</li>
+    </ul>
+
+    <div class="sidebar-footer">
+      <button class="sm-btn" onclick="exportDataBackup()">💾 Export Backup</button>
+      <button class="sm-btn" onclick="triggerRestoreUpload()">📂 Restore Backup</button>
+      <input type="file" id="restore-file-input" style="display: none;" accept=".json" onchange="importDataBackup(event)">
+      <button class="sm-btn" onclick="triggerChangePin()">🔒 Change PIN Code</button>
+      <button class="sm-btn" onclick="lockApp()" style="color: var(--danger);">🔒 Lock Session</button>
+    </div>
+  </sidebar>
+
+  <!-- MAIN CONTENT AREA -->
+  <main>
+
+    <!-- SECTION 1: DASHBOARD -->
+    <div id="dashboard" class="content-section active">
+      <div class="section-header">
+        <h1>Dashboard Overview</h1>
+        <button class="action-btn" onclick="switchTab('packages')">+ New Shoot Setup</button>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3>Active Selection</h3>
+          <div style="font-size: 1.8rem; font-weight: 700; color: var(--accent);" id="stat-calc-total">$20.00</div>
+          <p style="color: var(--text-sub); font-size: 0.85rem; margin-top: 4px;" id="stat-selected-name">Standard Shoot Coverage</p>
+        </div>
+
+        <div class="card">
+          <h3>Scheduled Sessions</h3>
+          <div style="font-size: 1.8rem; font-weight: 700;" id="stat-booking-count">0 Shoots</div>
+          <p style="color: var(--text-sub); font-size: 0.85rem; margin-top: 4px;">Calendar entries</p>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 1.5rem;">
+        <h3>Quick Client Notes</h3>
+        <div class="form-group" style="display: flex; gap: 8px;">
+          <input type="text" id="note-input" placeholder="Type quick memo or client note...">
+          <button class="action-btn" onclick="addClientNote()">Add</button>
+        </div>
+        <div id="notes-container" style="display: flex; flex-direction: column; gap: 8px; margin-top: 1rem;">
+          <!-- Dynamic Notes -->
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: PACKAGE ESTIMATOR -->
+    <div id="packages" class="content-section">
+      <div class="section-header">
+        <h1>Package & Service Estimator</h1>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3>Select Base Service Tier</h3>
+          
+          <label class="tier-option">
+            <input type="radio" name="pkg_tier" value="20" checked onchange="calculatePackageTotal()">
+            <div>
+              <h4 style="font-size: 0.95rem;">Standard Shoot Coverage</h4>
+              <p style="font-size: 0.8rem; color: var(--text-sub);">$20.00 - General photography & portrait session</p>
+            </div>
+          </label>
+
+          <label class="tier-option">
+            <input type="radio" name="pkg_tier" value="50" onchange="calculatePackageTotal()">
+            <div>
+              <h4 style="font-size: 0.95rem;">Full Fleet / Event Package</h4>
+              <p style="font-size: 0.8rem; color: var(--text-sub);">$50.00 - Complete coverage & multi-angle editing</p>
+            </div>
+          </label>
+
+          <label class="tier-option">
+            <input type="radio" name="pkg_tier" value="auto" onchange="calculatePackageTotal()">
+            <div>
+              <h4 style="font-size: 0.95rem;">Automotive / Fleet Tiered Rates</h4>
+              <p style="font-size: 0.8rem; color: var(--text-sub);">$75.00 per set of 10 vehicles</p>
+            </div>
+          </label>
+
+          <div id="auto-counter-box" style="display: none; margin-top: 10px; padding: 10px; background: var(--card-bg); border-radius: 6px;">
+            <label style="font-size: 0.8rem; color: var(--text-sub);">Vehicle / Fleet Count:</label>
+            <input type="number" id="car-count-input" value="1" min="1" oninput="calculatePackageTotal()" style="margin-top: 4px;">
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Add-ons & Options</h3>
+          
+          <div class="form-group">
+            <label>Additional Location Stops ($10/each)</label>
+            <input type="number" id="extra-loc-count" value="0" min="0" oninput="calculatePackageTotal()">
+          </div>
+
+          <div class="form-group">
+            <label class="tier-option" style="margin-top: 10px;">
+              <input type="checkbox" class="pkg-addon" value="20" onchange="calculatePackageTotal()">
+              <div>
+                <h4 style="font-size: 0.9rem;">Rush Delivery Service</h4>
+                <p style="font-size: 0.75rem; color: var(--text-sub);">+$20.00 - Priority photo turnaround</p>
+              </div>
+            </label>
+          </div>
+
+          <div style="border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 1rem; font-weight: 600;">Calculated Estimate:</span>
+              <span style="font-size: 1.5rem; font-weight: 800; color: var(--accent);">$<span id="pkg-total-val">20.00</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 3: BOOKING CALENDAR -->
+    <div id="calendar" class="content-section">
+      <div class="section-header">
+        <h1>Booking Calendar Scheduler</h1>
+        <button class="action-btn" onclick="openModal()">+ Schedule Shoot</button>
+      </div>
+
+      <div class="card">
+        <div class="cal-header">
+          <button class="sm-btn" onclick="prevMonth()">◀ Prev</button>
+          <h2 id="cal-month-year" style="font-size: 1.1rem;">Month Year</h2>
+          <button class="sm-btn" onclick="nextMonth()">Next ▶</button>
+        </div>
+
+        <div class="cal-grid" id="calendar-body">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 4: PHOTO DIRECTORY -->
+    <div id="directory" class="content-section">
+      <div class="section-header">
+        <h1>Media Directory Manager</h1>
+        <button class="action-btn" onclick="triggerPhotoSelect()">📷 Upload Photos</button>
+        <input type="file" id="file-upload-input" multiple accept="image/*" style="display:none;" onchange="handleFileUpload(event)">
+      </div>
+
+      <div class="card" style="margin-bottom: 1.5rem;">
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+          <input type="text" id="dir-client-input" placeholder="Enter new folder / client name..." style="flex: 1; min-width: 200px;">
+          <button class="sm-btn" onclick="deleteActiveDirectory()" style="color: var(--danger);">Delete Active Folder</button>
+        </div>
+      </div>
+
+      <div class="dir-badges" id="directory-badges-list">
+        <!-- Dynamic Folders -->
+      </div>
+
+      <div class="card">
+        <h3 id="active-dir-title">Active Directory: General</h3>
+        <div class="photo-grid" id="photo-grid-container">
+          <!-- Dynamic Photos -->
+        </div>
+      </div>
+    </div>
 
     <!-- SECTION 5: INVOICE GENERATOR -->
     <div id="invoice" class="content-section">
@@ -131,6 +881,36 @@
     </div>
 
   </main>
+
+  <!-- EVENT BOOKING MODAL -->
+  <div class="modal-overlay" id="event-modal">
+    <div class="modal-box">
+      <h3 style="margin-bottom: 1rem;">Schedule New Session</h3>
+      <div class="form-group">
+        <label>Client / Agency Name</label>
+        <input type="text" id="m-client" placeholder="e.g. City Police Fleet Shoot">
+      </div>
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" id="m-date">
+      </div>
+      <div class="form-group">
+        <label>Time</label>
+        <input type="text" id="m-time" placeholder="e.g. 2:00 PM">
+      </div>
+      <div style="display: flex; gap: 8px; margin-top: 1.5rem; justify-content: flex-end;">
+        <button class="sm-btn" onclick="closeModal()">Cancel</button>
+        <button class="action-btn" onclick="addCalendarEvent()">Save Booking</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LIGHTBOX IMAGE MODAL -->
+  <div class="modal-overlay" id="lightbox" onclick="closeLightbox()">
+    <div style="max-width: 90%; max-height: 90%;">
+      <img id="lightbox-img" src="" style="max-width: 100%; max-height: 80vh; border-radius: 8px; border: 1px solid var(--border);" alt="Preview">
+    </div>
+  </div>
 
   <script>
     /* GLOBAL STATE & STORAGE KEYS */
