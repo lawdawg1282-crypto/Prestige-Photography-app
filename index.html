@@ -290,7 +290,7 @@
       gap: 12px;
     }
 
-    .tier-option input[type="radio"] {
+    .tier-option input[type="radio"], .tier-option input[type="checkbox"] {
       accent-color: var(--accent);
     }
 
@@ -467,12 +467,13 @@
     }
 
     #sig-canvas {
-      border: 1px dashed #666;
-      background: #fafafa;
+      border: 1px dashed #444;
+      background: #fdfdfd;
       width: 100%;
-      height: 120px;
+      height: 140px;
       border-radius: 4px;
       cursor: crosshair;
+      touch-action: none;
     }
 
     /* MODAL */
@@ -914,7 +915,7 @@
 
   <script>
     /* GLOBAL STATE & STORAGE KEYS */
-    let currentPin = "0814";
+    let currentPin = "1234";
     let enteredPin = "";
     let appData = {
       notes: [],
@@ -928,7 +929,6 @@
     /* INITIALIZATION */
     window.addEventListener('DOMContentLoaded', () => {
       loadStoredData();
-      initSignatureCanvas();
       calculatePackageTotal();
       renderNotes();
       renderDirectories();
@@ -1025,6 +1025,11 @@
       if (window.innerWidth <= 991) {
         document.getElementById('sidebar-drawer').classList.remove('open');
       }
+
+      // Re-initialize signature canvas if switching to contract tab
+      if (tabId === 'contract') {
+        setTimeout(initSignatureCanvas, 50);
+      }
     }
 
     function toggleMobileSidebar() {
@@ -1035,7 +1040,7 @@
     function calculatePackageTotal() {
       const radios = document.getElementsByName('pkg_tier');
       let basePrice = 20;
-      let selectedName = "Standard Shoot";
+      let selectedName = "Standard Photography Coverage & Editing";
       let mainQty = "1";
 
       radios.forEach(r => {
@@ -1071,7 +1076,7 @@
       document.getElementById('stat-calc-total').innerText = `$${total.toFixed(2)}`;
       document.getElementById('stat-selected-name').innerText = selectedName;
 
-      // --- AUTOFILL INVOICE ENGINE ---
+      // AUTOFILL INVOICE ENGINE
       const invDesc1 = document.getElementById('inv-desc-1');
       const invQty1 = document.getElementById('inv-qty-1');
       const invAmt1 = document.getElementById('inv-amt-1');
@@ -1347,9 +1352,10 @@
       appData.notes.forEach(n => {
         const item = document.createElement('div');
         item.className = 'note-item';
+        item.style.cssText = "display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border);";
         item.innerHTML = `
           <span style="font-size: 0.88rem; color: var(--text-main);">${n.text}</span>
-          <button class="cal-btn" style="color: var(--danger); border-color: rgba(239, 68, 68, 0.3); padding: 4px 8px; font-size: 0.75rem;" onclick="deleteClientNote('${n.id}')">Delete</button>
+          <button class="sm-btn" style="color: var(--danger); border-color: rgba(239, 68, 68, 0.3); padding: 2px 6px; font-size: 0.75rem;" onclick="deleteClientNote('${n.id}')">Delete</button>
         `;
         container.appendChild(item);
       });
@@ -1383,55 +1389,52 @@
       document.getElementById('inv-total').innerText = subtotal.toFixed(2);
     }
 
-    /* SIGNATURE CANVAS LOGIC */
+    /* SIGNATURE CANVAS REPAIRED LOGIC */
     let canvas, ctx;
     let isDrawing = false;
+    let canvasInitialized = false;
 
     function initSignatureCanvas() {
       canvas = document.getElementById('sig-canvas');
       if (!canvas) return;
-      ctx = canvas.getContext('2d');
 
+      // Adjust pixel size to match container width when visible
       const rect = canvas.getBoundingClientRect();
-      canvas.width = rect.width || 400;
-      canvas.height = 120;
+      if (rect.width > 0) {
+        canvas.width = rect.width;
+        canvas.height = 140;
+      } else {
+        canvas.width = 600;
+        canvas.height = 140;
+      }
 
+      ctx = canvas.getContext('2d');
       ctx.lineWidth = 2;
       ctx.lineCap = 'round';
       ctx.strokeStyle = '#000000';
 
+      if (canvasInitialized) return;
+      canvasInitialized = true;
+
       // Mouse Listeners
       canvas.addEventListener('mousedown', startDrawing);
       canvas.addEventListener('mousemove', draw);
-      canvas.addEventListener('mouseup', stopDrawing);
-      canvas.addEventListener('mouseleave', stopDrawing);
+      window.addEventListener('mouseup', stopDrawing);
 
       // Touch Listeners
       canvas.addEventListener('touchstart', (e) => {
         e.preventDefault();
         const touch = e.touches[0];
-        const mouseEvent = new MouseEvent("mousedown", {
-          clientX: touch.clientX,
-          clientY: touch.clientY
-        });
-        canvas.dispatchEvent(mouseEvent);
-      });
+        startDrawing({ clientX: touch.clientX, clientY: touch.clientY });
+      }, { passive: false });
 
       canvas.addEventListener('touchmove', (e) => {
         e.preventDefault();
         const touch = e.touches[0];
-        const mouseEvent = new MouseEvent("mousemove", {
-          clientX: touch.clientX,
-          clientY: touch.clientY
-        });
-        canvas.dispatchEvent(mouseEvent);
-      });
+        draw({ clientX: touch.clientX, clientY: touch.clientY });
+      }, { passive: false });
 
-      canvas.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        const mouseEvent = new MouseEvent("mouseup", {});
-        canvas.dispatchEvent(mouseEvent);
-      });
+      canvas.addEventListener('touchend', stopDrawing);
     }
 
     function getPos(e) {
