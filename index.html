@@ -179,6 +179,7 @@
       border-radius: 6px;
       cursor: pointer;
       font-size: 0.8rem;
+      transition: all 0.15s;
     }
 
     .sm-btn:hover {
@@ -260,6 +261,7 @@
       padding: 10px;
       border-radius: 6px;
       outline: none;
+      transition: border-color 0.2s;
     }
 
     input:focus, select:focus {
@@ -279,6 +281,98 @@
 
     .action-btn:hover {
       background: var(--accent-hover);
+    }
+
+    /* UPGRADED CLIENT NOTE CARDS & FILTERS */
+    .note-filter-bar {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .note-filter-chip {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      color: var(--text-sub);
+      padding: 4px 10px;
+      border-radius: 14px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.15s;
+    }
+
+    .note-filter-chip:hover, .note-filter-chip.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .note-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent);
+      border-radius: 8px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+    }
+
+    .note-card:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    }
+
+    .note-card.pinned {
+      background: rgba(59, 130, 246, 0.08);
+      border-color: var(--accent);
+    }
+
+    .note-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.75rem;
+    }
+
+    .note-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .note-cat-badge {
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .note-time {
+      color: var(--text-sub);
+      font-size: 0.75rem;
+    }
+
+    .note-body {
+      font-size: 0.9rem;
+      color: var(--text-main);
+      line-height: 1.4;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .note-actions {
+      display: flex;
+      gap: 6px;
+      justify-content: flex-end;
     }
 
     /* AUTOCOMPLETE DROPDOWN */
@@ -813,14 +907,39 @@
         </div>
       </div>
 
+      <!-- UPGRADED QUICK CLIENT NOTES CARD -->
       <div class="card" style="margin-top: 1.5rem;">
-        <h3>Quick Client Notes</h3>
-        <div class="form-group" style="display: flex; gap: 8px;">
-          <input type="text" id="note-input" placeholder="Type quick memo or client note...">
-          <button class="action-btn" onclick="addClientNote()">Add</button>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+          <h3 style="margin-bottom: 0;">Quick Client Notes & Memos</h3>
+          <span style="font-size: 0.75rem; color: var(--text-sub);" id="note-count-badge">0 Notes</span>
         </div>
-        <div id="notes-container" style="display: flex; flex-direction: column; gap: 8px; margin-top: 1rem;">
-          <!-- Dynamic Notes -->
+
+        <!-- NOTE CREATION BAR WITH CATEGORY SELECTOR -->
+        <div class="form-group" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 0;">
+          <select id="note-category-select" style="width: auto; min-width: 150px;">
+            <option value="General">ℹ️ General Memo</option>
+            <option value="Urgent">🚨 Urgent / Alert</option>
+            <option value="Shoot Prep">📸 Shoot Prep</option>
+            <option value="Billing">💼 Billing & Invoices</option>
+            <option value="Fleet Spec">🚓 Fleet & Vehicle Specs</option>
+          </select>
+          <input type="text" id="note-input" placeholder="Type detailed memo, client requirement, or dispatch reminder..." style="flex: 1; min-width: 220px;" onkeydown="if(event.key==='Enter') addClientNote()">
+          <button class="action-btn" onclick="addClientNote()">+ Add Note</button>
+        </div>
+
+        <!-- QUICK CATEGORY FILTER BAR -->
+        <div class="note-filter-bar">
+          <div class="note-filter-chip active" onclick="setNoteFilter('ALL', this)">All Memos</div>
+          <div class="note-filter-chip" onclick="setNoteFilter('Urgent', this)">🚨 Urgent</div>
+          <div class="note-filter-chip" onclick="setNoteFilter('Shoot Prep', this)">📸 Shoot Prep</div>
+          <div class="note-filter-chip" onclick="setNoteFilter('Billing', this)">💼 Billing</div>
+          <div class="note-filter-chip" onclick="setNoteFilter('Fleet Spec', this)">🚓 Fleet Specs</div>
+          <div class="note-filter-chip" onclick="setNoteFilter('PINNED', this)">📌 Pinned Only</div>
+        </div>
+
+        <!-- NOTES CONTAINER -->
+        <div id="notes-container" style="display: flex; flex-direction: column; gap: 10px; min-height: 80px;">
+          <!-- Dynamic Rich Note Cards Rendered Here -->
         </div>
       </div>
     </div>
@@ -1398,6 +1517,7 @@
     let selectedEventIdForDetails = null;
     let selectedClientNameForDetails = null;
     let mediaStream = null;
+    let currentNoteFilter = "ALL";
 
     /* 3. FIREBASE REAL-TIME LISTENERS */
     window.addEventListener('DOMContentLoaded', () => {
@@ -2286,40 +2406,127 @@
       document.getElementById('lightbox').style.display = 'none';
     }
 
-    /* QUICK CLIENT NOTES */
+    /* UPGRADED RICH CLIENT NOTES SYSTEM */
     function renderNotes() {
       const container = document.getElementById('notes-container');
+      const badge = document.getElementById('note-count-badge');
       if (!container) return;
       container.innerHTML = '';
 
-      if (!appData.notes || appData.notes.length === 0) {
-        container.innerHTML = `<p style="color: var(--text-sub); font-size: 0.88rem;">No client notes recorded yet.</p>`;
+      let notesList = appData.notes || [];
+      if (badge) badge.innerText = `${notesList.length} Note${notesList.length === 1 ? '' : 's'}`;
+
+      // Filter notes based on active chip
+      if (currentNoteFilter === "PINNED") {
+        notesList = notesList.filter(n => n.pinned === true);
+      } else if (currentNoteFilter !== "ALL") {
+        notesList = notesList.filter(n => (n.category || "General") === currentNoteFilter);
+      }
+
+      if (notesList.length === 0) {
+        container.innerHTML = `<p style="color: var(--text-sub); font-size: 0.88rem; text-align: center; padding: 1rem 0;">No memos match your current filter view.</p>`;
         return;
       }
 
-      appData.notes.forEach(n => {
-        const item = document.createElement('div');
-        item.className = 'note-item';
-        item.style.cssText = "display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border);";
-        item.innerHTML = `
-          <span style="font-size: 0.88rem; color: var(--text-main);">${n.text}</span>
-          <button class="sm-btn" style="color: var(--danger); border-color: rgba(239, 68, 68, 0.3); padding: 2px 6px; font-size: 0.75rem;" onclick="deleteClientNote('${n.id}')">Delete</button>
-        `;
-        container.appendChild(item);
+      // Sort: pinned notes first, then newest timestamps first
+      notesList.sort((a, b) => {
+        if (a.pinned && !b.pinned) return -1;
+        if (!a.pinned && b.pinned) return 1;
+        return (b.timestamp || 0) - (a.timestamp || 0);
       });
+
+      notesList.forEach(n => {
+        const cat = n.category || "General";
+        let badgeBg = "rgba(59, 130, 246, 0.2)";
+        let badgeColor = "#60a5fa";
+        let borderColor = "#3b82f6";
+
+        if (cat === "Urgent") {
+          badgeBg = "rgba(239, 68, 68, 0.2)";
+          badgeColor = "#f87171";
+          borderColor = "#ef4444";
+        } else if (cat === "Shoot Prep") {
+          badgeBg = "rgba(16, 185, 129, 0.2)";
+          badgeColor = "#34d399";
+          borderColor = "#10b981";
+        } else if (cat === "Billing") {
+          badgeBg = "rgba(245, 158, 11, 0.2)";
+          badgeColor = "#fbbf24";
+          borderColor = "#f59e0b";
+        } else if (cat === "Fleet Spec") {
+          badgeBg = "rgba(139, 92, 246, 0.2)";
+          badgeColor = "#a78bfa";
+          borderColor = "#8b5cf6";
+        }
+
+        const timeString = n.timestamp ? new Date(n.timestamp).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : "Memo Record";
+
+        const card = document.createElement('div');
+        card.className = `note-card ${n.pinned ? 'pinned' : ''}`;
+        card.style.borderLeftColor = borderColor;
+
+        card.innerHTML = `
+          <div class="note-header">
+            <div class="note-meta">
+              <span class="note-cat-badge" style="background: ${badgeBg}; color: ${badgeColor};">${cat}</span>
+              <span class="note-time">${timeString}</span>
+            </div>
+            <div class="note-actions">
+              <button class="sm-btn" style="padding: 2px 8px; font-size: 0.72rem; color: ${n.pinned ? '#fbbf24' : 'var(--text-sub)'};" onclick="togglePinNote('${n.id}', ${n.pinned ? 'true' : 'false'})" title="Pin / Unpin Note">
+                ${n.pinned ? '📌 Pinned' : '📍 Pin'}
+              </button>
+              <button class="sm-btn" style="padding: 2px 8px; font-size: 0.72rem;" onclick="copyNoteText('${encodeURIComponent(n.text || '')}')" title="Copy Memo Text">📋 Copy</button>
+              <button class="sm-btn" style="padding: 2px 8px; font-size: 0.72rem; color: var(--danger); border-color: rgba(239, 68, 68, 0.3);" onclick="deleteClientNote('${n.id}')" title="Delete Note">✕</button>
+            </div>
+          </div>
+          <div class="note-body">${n.text || ''}</div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function setNoteFilter(filterType, chipEl) {
+      currentNoteFilter = filterType;
+      document.querySelectorAll('.note-filter-chip').forEach(c => c.classList.remove('active'));
+      if (chipEl) chipEl.classList.add('active');
+      renderNotes();
     }
 
     function addClientNote() {
       const input = document.getElementById('note-input');
+      const categorySelect = document.getElementById('note-category-select');
       const text = input.value.trim();
       if (!text) return;
 
-      db.ref('notes').push({ text: text });
+      const category = categorySelect ? categorySelect.value : "General";
+
+      db.ref('notes').push({
+        text: text,
+        category: category,
+        timestamp: Date.now(),
+        pinned: false
+      });
+
       input.value = '';
     }
 
+    function togglePinNote(id, isPinned) {
+      db.ref(`notes/${id}/pinned`).set(!isPinned);
+    }
+
+    function copyNoteText(encodedText) {
+      const text = decodeURIComponent(encodedText);
+      navigator.clipboard.writeText(text).then(() => {
+        alert("Note copied to clipboard!");
+      }).catch(err => {
+        console.error("Copy error:", err);
+      });
+    }
+
     function deleteClientNote(id) {
-      db.ref(`notes/${id}`).remove();
+      if (confirm("Delete this memo record permanently?")) {
+        db.ref(`notes/${id}`).remove();
+      }
     }
 
     /* INVOICE CALCULATIONS */
