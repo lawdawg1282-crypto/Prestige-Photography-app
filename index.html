@@ -3,2020 +3,515 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Prestige Photography - Live Management Portal</title>
-  
-  <!-- FIREBASE COMPAT SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-
+  <title>Prestige Photography & Media Portal</title>
   <style>
     :root {
-      --bg-dark: #0a0c10;
-      --panel-bg: #12161f;
-      --card-bg: #1a202c;
-      --border: #2d3748;
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --text-sub: #94a3b8;
       --accent: #3b82f6;
       --accent-hover: #2563eb;
-      --text-main: #f3f4f6;
-      --text-sub: #9ca3af;
       --danger: #ef4444;
-      --success: #10b981;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    }
-
-    body {
-      background-color: var(--bg-dark);
-      color: var(--text-main);
-      display: flex;
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
-
-    /* SECURITY LOCK OVERLAY */
-    #lock-screen {
-      position: fixed;
-      inset: 0;
-      background: rgba(10, 12, 16, 0.98);
-      z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      backdrop-filter: blur(10px);
-    }
-
-    .lock-box {
-      background: var(--panel-bg);
-      border: 1px solid var(--border);
-      padding: 2.5rem;
-      border-radius: 12px;
-      text-align: center;
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
-      max-width: 360px;
-      width: 90%;
-    }
-
-    .pin-display {
-      display: flex;
-      justify-content: center;
-      gap: 12px;
-      margin: 1.5rem 0;
-    }
-
-    .pin-dot {
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      border: 2px solid var(--border);
-      transition: all 0.2s;
-    }
-
-    .pin-dot.active {
-      background: var(--accent);
-      border-color: var(--accent);
-      box-shadow: 0 0 10px var(--accent);
-    }
-
-    .numpad {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-    }
-
-    .num-btn {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      color: var(--text-main);
-      padding: 14px;
-      border-radius: 8px;
-      font-size: 1.2rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.15s;
-    }
-
-    .num-btn:hover {
-      background: var(--border);
-    }
-
-    /* LAYOUT & SIDEBAR */
-    sidebar {
-      width: 260px;
-      background: var(--panel-bg);
-      border-right: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      padding: 1.5rem 1rem;
-      transition: transform 0.3s ease;
-    }
-
-    .brand {
-      padding-bottom: 1.5rem;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 1.5rem;
-    }
-
-    .brand h2 {
-      font-size: 1.2rem;
-      letter-spacing: 2px;
-      font-weight: 800;
-    }
-
-    .brand p {
-      font-size: 0.75rem;
-      color: var(--accent);
-      font-weight: 600;
-      letter-spacing: 1px;
-    }
-
-    .nav-list {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      flex: 1;
-    }
-
-    .nav-item {
-      padding: 10px 14px;
-      border-radius: 6px;
-      color: var(--text-sub);
-      cursor: pointer;
-      font-size: 0.9rem;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      transition: all 0.2s;
-    }
-
-    .nav-item:hover, .nav-item.active {
-      background: var(--accent);
-      color: white;
-    }
-
-    .sidebar-footer {
-      border-top: 1px solid var(--border);
-      padding-top: 1rem;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .sm-btn {
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--text-sub);
-      padding: 8px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 0.8rem;
-    }
-
-    .sm-btn:hover {
-      background: var(--card-bg);
-      color: var(--text-main);
-    }
-
-    /* MAIN CONTENT */
-    main {
-      flex: 1;
-      padding: 2rem;
-      overflow-y: auto;
-      height: 100vh;
-    }
-
-    .mobile-header {
-      display: none;
-      justify-content: space-between;
-      align-items: center;
-      padding: 1rem;
-      background: var(--panel-bg);
-      border-bottom: 1px solid var(--border);
-    }
-
-    .content-section {
-      display: none;
-      max-width: 1000px;
-      margin: 0 auto;
-    }
-
-    .content-section.active {
-      display: block;
-    }
-
-    .section-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.5rem;
-    }
-
-    .grid-2 {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 1.5rem;
-    }
-
-    .card {
-      background: var(--panel-bg);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 1.25rem;
-    }
-
-    .card h3 {
-      font-size: 1rem;
-      margin-bottom: 1rem;
-      color: var(--text-main);
-    }
-
-    /* FORMS & INPUTS */
-    .form-group {
-      margin-bottom: 1rem;
-      position: relative;
-    }
-
-    .form-group label {
-      display: block;
-      font-size: 0.8rem;
-      color: var(--text-sub);
-      margin-bottom: 4px;
-    }
-
-    input[type="text"], input[type="number"], input[type="date"], select, textarea {
-      width: 100%;
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      color: var(--text-main);
-      padding: 10px;
-      border-radius: 6px;
-      outline: none;
-    }
-
-    input:focus, select:focus {
-      border-color: var(--accent);
-    }
-
-    .action-btn {
-      background: var(--accent);
-      color: white;
-      border: none;
-      padding: 10px 16px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 600;
-      transition: background 0.2s;
-    }
-
-    .action-btn:hover {
-      background: var(--accent-hover);
-    }
-
-    /* AUTOCOMPLETE DROPDOWN */
-    .autocomplete-list {
-      position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
-      background: var(--card-bg);
-      border: 1px solid var(--accent);
-      border-radius: 6px;
-      max-height: 160px;
-      overflow-y: auto;
-      z-index: 1050;
-      display: none;
-      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5);
-    }
-
-    .autocomplete-item {
-      padding: 8px 12px;
-      font-size: 0.85rem;
-      cursor: pointer;
-      border-bottom: 1px solid var(--border);
-      color: var(--text-main);
-      display: flex;
-      justify-content: space-between;
-    }
-
-    .autocomplete-item:hover {
-      background: var(--accent);
-      color: white;
-    }
-
-    /* CLIENT SPREADSHEET DIRECTORY */
-    .sheet-wrapper {
-      width: 100%;
-      overflow-x: auto;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: var(--panel-bg);
-    }
-
-    .sheet-table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 900px;
-      font-size: 0.85rem;
-    }
-
-    .sheet-table th {
-      background: #18202f;
-      color: var(--text-sub);
-      text-align: left;
-      padding: 12px;
-      font-weight: 600;
-      border-bottom: 1px solid var(--border);
-      border-right: 1px solid var(--border);
-    }
-
-    .sheet-table td {
-      padding: 10px 12px;
-      border-bottom: 1px solid var(--border);
-      border-right: 1px solid var(--border);
-      vertical-align: middle;
-    }
-
-    .sheet-input {
-      background: transparent;
-      border: 1px solid transparent;
-      color: var(--text-main);
-      width: 100%;
-      padding: 4px 6px;
-      border-radius: 4px;
-    }
-
-    .sheet-input:focus {
-      background: var(--card-bg);
-      border-color: var(--accent);
-    }
-
-    .badge-pill {
-      display: inline-block;
-      padding: 3px 8px;
-      border-radius: 12px;
-      font-size: 0.72rem;
-      font-weight: 600;
-    }
-
-    .badge-blue { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
-    .badge-green { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
-
-    /* PACKAGE ESTIMATOR CARDS */
-    .tier-option {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      padding: 12px;
-      border-radius: 8px;
-      margin-bottom: 8px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .tier-option input[type="radio"], .tier-option input[type="checkbox"] {
-      accent-color: var(--accent);
-    }
-
-    /* CALENDAR SCHEDULER */
-    .cal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1rem;
-    }
-
-    .cal-grid {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 6px;
-    }
-
-    .cal-day-header {
-      text-align: center;
-      font-size: 0.75rem;
-      color: var(--text-sub);
-      padding: 6px;
-    }
-
-    .cal-cell {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      min-height: 85px;
-      padding: 6px;
-      border-radius: 6px;
-      font-size: 0.75rem;
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-      transition: border-color 0.15s;
-    }
-
-    .cal-cell:hover {
-      border-color: var(--accent);
-    }
-
-    .cal-cell.empty {
-      background: transparent;
-      border: none;
-      cursor: default;
-    }
-
-    .cal-num {
-      font-weight: 700;
-      margin-bottom: 4px;
-      color: var(--text-sub);
-    }
-
-    .event-tag {
-      background: rgba(59, 130, 246, 0.18);
-      border: 1px solid rgba(59, 130, 246, 0.4);
-      border-left: 3px solid var(--accent);
-      padding: 4px 6px;
-      border-radius: 4px;
-      font-size: 0.7rem;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      cursor: pointer;
-      transition: background 0.15s;
-    }
-
-    .event-tag:hover {
-      background: rgba(59, 130, 246, 0.3);
-    }
-
-    .event-tag-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-weight: 700;
-      color: #60a5fa;
-    }
-
-    .event-tag-client {
-      font-weight: 600;
-      color: var(--text-main);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    /* MEDIA & DIRECTORY STORAGE */
-    .dir-badges {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-bottom: 1rem;
-    }
-
-    .directory-badge {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 0.8rem;
-      cursor: pointer;
-    }
-
-    .directory-badge.active {
-      background: var(--accent);
-      border-color: var(--accent);
-    }
-
-    .photo-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-      gap: 12px;
-    }
-
-    .photo-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      overflow: hidden;
-      position: relative;
-    }
-
-    .photo-card img {
-      width: 100%;
-      height: 100px;
-      object-fit: cover;
-    }
-
-    .photo-actions {
-      display: flex;
-      padding: 4px;
-      gap: 4px;
-    }
-
-    .photo-btn {
-      flex: 1;
-      background: var(--panel-bg);
-      border: 1px solid var(--border);
-      color: var(--text-main);
-      padding: 4px;
-      font-size: 0.7rem;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-
-    .photo-btn.delete-btn {
-      color: var(--danger);
-    }
-
-    /* DOCUMENT SHEETS */
-    .document-container {
-      background: white;
-      color: black;
-      padding: 2rem;
-      border-radius: 8px;
-      margin-top: 1rem;
-    }
-
-    .doc-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 1rem;
-    }
-
-    .doc-table th, .doc-table td {
-      border: 1px solid #ddd;
-      padding: 8px 12px;
-      font-size: 0.85rem;
-    }
-
-    .doc-table th {
-      background: #f4f4f4;
-    }
-
-    .doc-logo-cell {
-      background: #000;
-      color: white;
-      padding: 12px;
-      text-align: center;
-    }
-
-    .doc-header-title {
-      font-weight: 800;
-      font-size: 1.2rem;
-      letter-spacing: 2px;
-      text-align: center;
-    }
-
-    .doc-input-inline {
-      border: none;
-      border-bottom: 1px solid #999;
-      background: transparent;
-      color: black;
-      padding: 2px 4px;
-      font-weight: 600;
-      border-radius: 0;
-    }
-
-    #sig-canvas {
-      border: 1px dashed #444;
-      background: #fdfdfd;
-      width: 100%;
-      height: 140px;
-      border-radius: 4px;
-      cursor: crosshair;
-      touch-action: none;
-    }
-
-    /* MODALS */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.7);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-    }
-
-    .modal-box {
-      background: var(--panel-bg);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 1.5rem;
-      width: 90%;
-      max-width: 480px;
-    }
-
-    /* STATUS BADGE */
-    .status-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.75rem;
-      padding: 4px 8px;
-      border-radius: 12px;
-      background: rgba(16, 185, 129, 0.1);
-      color: var(--success);
-      border: 1px solid rgba(16, 185, 129, 0.2);
-    }
-
+      --success: #22c55e;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+
+    header { background: var(--card-bg); border-bottom: 1px solid var(--border); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+    header h1 { font-size: 1.25rem; font-weight: 600; }
+    .nav-links { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .nav-btn { background: transparent; border: none; color: var(--text-sub); cursor: pointer; font-size: 0.85rem; padding: 0.5rem 0.75rem; border-radius: 6px; transition: 0.2s; }
+    .nav-btn:hover, .nav-btn.active { background: var(--border); color: var(--text); }
+
+    main { padding: 2rem; max-width: 1400px; margin: 0 auto; width: 100%; flex: 1; }
+    .view-section { display: none; }
+    .view-section.active { display: block; }
+
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    .grid-3 { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
+
+    h2 { font-size: 1.2rem; margin-bottom: 1rem; font-weight: 600; }
+    p { color: var(--text-sub); font-size: 0.9rem; margin-bottom: 1rem; }
+
+    .form-group { margin-bottom: 1rem; }
+    label { display: block; font-size: 0.85rem; color: var(--text-sub); margin-bottom: 0.4rem; }
+    input, select, textarea { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem; color: var(--text); font-size: 0.9rem; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+
+    .action-btn { background: var(--accent); color: white; border: none; padding: 0.75rem 1.25rem; border-radius: 6px; font-weight: 500; cursor: pointer; transition: 0.2s; }
+    .action-btn:hover { background: var(--accent-hover); }
+    .sm-btn { background: var(--border); color: var(--text); border: none; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
+    .sm-btn:hover { background: #475569; }
+
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; }
+    th, td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); }
+    th { color: var(--text-sub); font-weight: 500; }
+    tr:hover { background: rgba(255,255,255,0.02); }
+
+    .photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
+    .photo-card { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+    .photo-card img { width: 100%; height: 150px; object-fit: cover; display: block; }
+    .photo-actions { padding: 0.75rem; text-align: center; }
+
+    /* Modal Styling */
+    .modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 100; }
+    .modal-content { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; width: 100%; max-width: 450px; padding: 2rem; position: relative; }
+    .modal-close { position: absolute; top: 1rem; right: 1rem; background: transparent; border: none; color: var(--text-sub); font-size: 1.2rem; cursor: pointer; }
+
+    /* Printable Label Sheet */
     @media print {
-      sidebar, .section-header, .mobile-header, #lock-screen {
-        display: none !important;
-      }
-      main {
-        padding: 0;
-        height: auto;
-        overflow: visible;
-      }
-      .content-section {
-        display: none !important;
-      }
-      .content-section.active {
-        display: block !important;
-      }
-      .document-container {
-        padding: 0;
-        border: none;
-      }
-    }
-
-    @media (max-width: 991px) {
-      body {
-        flex-direction: column;
-      }
-      sidebar {
-        position: fixed;
-        inset: 0 auto 0 0;
-        z-index: 500;
-        transform: translateX(-100%);
-      }
-      sidebar.open {
-        transform: translateX(0);
-      }
-      .mobile-header {
-        display: flex;
-      }
+      body * { visibility: hidden; }
+      #print-label-modal, #print-label-modal * { visibility: visible; }
+      #print-label-modal { position: absolute; left: 0; top: 0; width: 100%; height: 100%; background: white; color: black; display: flex !important; justify-content: center; align-items: center; }
+      .modal-close, .action-btn { display: none !important; }
     }
   </style>
 </head>
 <body>
 
-  <!-- SECURITY LOCK OVERLAY -->
-  <div id="lock-screen">
-    <div class="lock-box">
-      <h2>PRESTIGE SYSTEM</h2>
-      <p style="color: var(--text-sub); font-size: 0.8rem; margin-top: 4px;">Enter PIN Access Code</p>
-      
-      <div class="pin-display">
-        <div class="pin-dot" id="dot1"></div>
-        <div class="pin-dot" id="dot2"></div>
-        <div class="pin-dot" id="dot3"></div>
-        <div class="pin-dot" id="dot4"></div>
-      </div>
+  <header>
+    <h1>Prestige Photography & Media</h1>
+    <nav class="nav-links">
+      <button class="nav-btn active" onclick="switchView('dashboard')">Dashboard</button>
+      <button class="nav-btn" onclick="switchView('clients')">Client Directory</button>
+      <button class="nav-btn" onclick="switchView('assets')">Equipment Assets</button>
+      <button class="nav-btn" onclick="switchView('calendar')">Booking Calendar</button>
+      <button class="nav-btn" onclick="switchView('estimator')">Package Estimator</button>
+      <button class="nav-btn" onclick="switchView('invoices')">Invoices</button>
+      <button class="nav-btn" onclick="switchView('photos')">Photo Directory</button>
+      <button class="nav-btn" onclick="switchView('printrelease')">Print Release</button>
+    </nav>
+  </header>
 
-      <div class="numpad">
-        <button class="num-btn" onclick="enterDigit('1')">1</button>
-        <button class="num-btn" onclick="enterDigit('2')">2</button>
-        <button class="num-btn" onclick="enterDigit('3')">3</button>
-        <button class="num-btn" onclick="enterDigit('4')">4</button>
-        <button class="num-btn" onclick="enterDigit('5')">5</button>
-        <button class="num-btn" onclick="enterDigit('6')">6</button>
-        <button class="num-btn" onclick="enterDigit('7')">7</button>
-        <button class="num-btn" onclick="enterDigit('8')">8</button>
-        <button class="num-btn" onclick="enterDigit('9')">9</button>
-        <button class="num-btn" onclick="clearPin()" style="color: var(--danger)">C</button>
-        <button class="num-btn" onclick="enterDigit('0')">0</button>
-        <button class="num-btn" onclick="verifyPin()" style="color: var(--success)">✓</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MOBILE HEADER -->
-  <div class="mobile-header">
-    <div style="font-weight: 800; letter-spacing: 1px;">PRESTIGE MEDIA</div>
-    <button class="sm-btn" onclick="toggleMobileSidebar()">☰ Menu</button>
-  </div>
-
-  <!-- NAVIGATION SIDEBAR -->
-  <sidebar id="sidebar-drawer">
-    <div class="brand">
-      <h2>PRESTIGE</h2>
-      <p>PHOTOGRAPHY PORTAL</p>
-      <div style="margin-top: 8px;">
-        <span class="status-badge">● Firebase RTDB Live</span>
-      </div>
-    </div>
-
-    <ul class="nav-list">
-      <li class="nav-item active" onclick="switchTab('dashboard', this)">📊 Dashboard</li>
-      <li class="nav-item" onclick="switchTab('client-directory', this)">👥 Client Directory</li>
-      <li class="nav-item" onclick="switchTab('packages', this)">🏷️ Package Estimator</li>
-      <li class="nav-item" onclick="switchTab('calendar', this)">📅 Booking Calendar</li>
-      <li class="nav-item" onclick="switchTab('directory', this)">📁 Photo Directory</li>
-      <li class="nav-item" onclick="switchTab('invoice', this)">🧾 Invoice Generator</li>
-      <li class="nav-item" onclick="switchTab('contract', this)">🖋️ Print Release Form</li>
-    </ul>
-
-    <div class="sidebar-footer">
-      <button class="sm-btn" onclick="triggerChangePin()">🔒 Change PIN Code</button>
-      <button class="sm-btn" onclick="lockApp()" style="color: var(--danger);">🔒 Lock Session</button>
-    </div>
-  </sidebar>
-
-  <!-- MAIN CONTENT AREA -->
   <main>
-
-    <!-- SECTION 1: DASHBOARD -->
-    <div id="dashboard" class="content-section active">
-      <div class="section-header">
-        <h1>Dashboard Overview</h1>
-        <button class="action-btn" onclick="switchTab('packages')">+ New Shoot Setup</button>
-      </div>
-
-      <div class="grid-2">
+    <!-- DASHBOARD VIEW -->
+    <section id="view-dashboard" class="view-section active">
+      <h2>Dashboard Overview</h2>
+      <div class="grid-3">
         <div class="card">
-          <h3>Active Selection</h3>
-          <div style="font-size: 1.8rem; font-weight: 700; color: var(--accent);" id="stat-calc-total">$20.00</div>
-          <p style="color: var(--text-sub); font-size: 0.85rem; margin-top: 4px;" id="stat-selected-name">Standard Shoot Coverage</p>
+          <p>Total Clients</p>
+          <h3 id="dash-client-count" style="font-size: 1.8rem;">0</h3>
         </div>
-
         <div class="card">
-          <h3>Scheduled Sessions</h3>
-          <div style="font-size: 1.8rem; font-weight: 700;" id="stat-booking-count">0 Shoots</div>
-          <p style="color: var(--text-sub); font-size: 0.85rem; margin-top: 4px;">Calendar entries</p>
+          <p>Registered Assets</p>
+          <h3 id="dash-asset-count" style="font-size: 1.8rem;">0</h3>
+        </div>
+        <div class="card">
+          <p>Upcoming Bookings</p>
+          <h3 id="dash-booking-count" style="font-size: 1.8rem;">0</h3>
         </div>
       </div>
+    </section>
 
-      <div class="card" style="margin-top: 1.5rem;">
-        <h3>Quick Client Notes</h3>
-        <div class="form-group" style="display: flex; gap: 8px;">
-          <input type="text" id="note-input" placeholder="Type quick memo or client note...">
-          <button class="action-btn" onclick="addClientNote()">Add</button>
-        </div>
-        <div id="notes-container" style="display: flex; flex-direction: column; gap: 8px; margin-top: 1rem;">
-          <!-- Dynamic Notes -->
-        </div>
+    <!-- CLIENT DIRECTORY VIEW -->
+    <section id="view-clients" class="view-section">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2>Client Directory</h2>
+        <button class="action-btn" onclick="addClient()">+ Add Client Profile</button>
       </div>
-    </div>
-
-    <!-- SECTION 2: CLIENT SPREADSHEET DIRECTORY -->
-    <div id="client-directory" class="content-section">
-      <div class="section-header">
-        <div>
-          <h1>Client Directory & Master Ledger</h1>
-          <p style="font-size: 0.85rem; color: var(--text-sub);">Manage client addresses, phone numbers, upcoming bookings, and gallery links.</p>
-        </div>
-        <button class="action-btn" onclick="openAddClientModal()">+ Add Client Profile</button>
-      </div>
-
-      <!-- DIRECTORY CONTROLS & SEARCH BAR -->
-      <div class="card" style="margin-bottom: 1.5rem;">
-        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-          <div style="flex: 1; min-width: 250px; position: relative;">
-            <input type="text" id="client-search-input" placeholder="🔍 Search clients by name, address, phone, or email..." oninput="renderClientSheet()">
-          </div>
-          <button class="sm-btn" onclick="renderClientSheet()">🔄 Refresh Ledger</button>
-        </div>
-      </div>
-
-      <!-- SPREADSHEET GRID VIEW -->
-      <div class="sheet-wrapper">
-        <table class="sheet-table">
+      <div class="card">
+        <table>
           <thead>
             <tr>
-              <th style="width: 20%;">Client / Agency Name</th>
-              <th style="width: 25%;">Physical / Agency Address</th>
-              <th style="width: 15%;">Contact Phone</th>
-              <th style="width: 18%;">Email Address</th>
-              <th style="width: 12%;">Next Booking</th>
-              <th style="width: 10%;">Actions</th>
+              <th>Client / Agency Name</th>
+              <th>Contact Phone</th>
+              <th>Email Address</th>
+              <th>Actions</th>
             </tr>
           </thead>
-          <tbody id="client-sheet-body">
-            <!-- Dynamic Client Rows -->
+          <tbody id="client-directory-table">
+            <!-- Dynamically populated -->
           </tbody>
         </table>
       </div>
-    </div>
+    </section>
 
-    <!-- SECTION 3: PACKAGE ESTIMATOR -->
-    <div id="packages" class="content-section">
-      <div class="section-header">
-        <h1>Package & Service Estimator</h1>
+    <!-- EQUIPMENT ASSETS VIEW -->
+    <section id="view-assets" class="view-section">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2>Equipment & Asset Directory</h2>
+        <button class="action-btn" onclick="addAsset()">+ Add Asset Item</button>
       </div>
+      <div class="card">
+        <table>
+          <thead>
+            <tr>
+              <th>Item Name</th>
+              <th>Serial Number</th>
+              <th>Asset ID</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="asset-directory-table">
+            <!-- Dynamically populated -->
+          </tbody>
+        </table>
+      </div>
+    </section>
 
+    <!-- BOOKING CALENDAR VIEW -->
+    <section id="view-calendar" class="view-section">
+      <h2>Booking Calendar</h2>
       <div class="grid-2">
         <div class="card">
-          <h3>Select Base Service Tier</h3>
-          
-          <label class="tier-option">
-            <input type="radio" name="pkg_tier" value="20" checked onchange="calculatePackageTotal()">
-            <div>
-              <h4 style="font-size: 0.95rem;">Standard Shoot Coverage</h4>
-              <p style="font-size: 0.8rem; color: var(--text-sub);">$20.00 - General photography & portrait session</p>
-            </div>
-          </label>
-
-          <label class="tier-option">
-            <input type="radio" name="pkg_tier" value="50" onchange="calculatePackageTotal()">
-            <div>
-              <h4 style="font-size: 0.95rem;">Full Fleet / Event Package</h4>
-              <p style="font-size: 0.8rem; color: var(--text-sub);">$50.00 - Complete coverage & multi-angle editing</p>
-            </div>
-          </label>
-
-          <label class="tier-option">
-            <input type="radio" name="pkg_tier" value="150" onchange="calculatePackageTotal()">
-            <div>
-              <h4 style="font-size: 0.95rem;">Real Estate Package</h4>
-              <p style="font-size: 0.8rem; color: var(--text-sub);">$150.00 - Full property interior & exterior photography</p>
-            </div>
-          </label>
-
-          <label class="tier-option">
-            <input type="radio" name="pkg_tier" value="auto" onchange="calculatePackageTotal()">
-            <div>
-              <h4 style="font-size: 0.95rem;">Automotive / Fleet Tiered Rates</h4>
-              <p style="font-size: 0.8rem; color: var(--text-sub);">$75.00 per set of 10 vehicles</p>
-            </div>
-          </label>
-
-          <div id="auto-counter-box" style="display: none; margin-top: 10px; padding: 10px; background: var(--card-bg); border-radius: 6px;">
-            <label style="font-size: 0.8rem; color: var(--text-sub);">Vehicle / Fleet Count:</label>
-            <input type="number" id="car-count-input" value="1" min="1" oninput="calculatePackageTotal()" style="margin-top: 4px;">
+          <h3>Schedule New Shoot</h3>
+          <div class="form-group">
+            <label>Client Name</label>
+            <input type="text" id="booking-client-name" placeholder="e.g. Oklahoma City Police Dept">
           </div>
+          <div class="form-group">
+            <label>Date & Time</label>
+            <input type="datetime-local" id="booking-datetime">
+          </div>
+          <div class="form-group">
+            <label>Location / Notes</label>
+            <input type="text" id="booking-location" placeholder="e.g. Station 4 Headquarters">
+          </div>
+          <button class="action-btn" onclick="saveBooking()">Schedule Shoot</button>
         </div>
-
         <div class="card">
-          <h3>Add-ons & Options</h3>
-          
-          <div class="form-group">
-            <label>Additional Location Stops ($10/each)</label>
-            <input type="number" id="extra-loc-count" value="0" min="0" oninput="calculatePackageTotal()">
-          </div>
-
-          <div class="form-group">
-            <label class="tier-option" style="margin-top: 10px;">
-              <input type="checkbox" class="pkg-addon" value="20" onchange="calculatePackageTotal()">
-              <div>
-                <h4 style="font-size: 0.9rem;">Rush Delivery Service</h4>
-                <p style="font-size: 0.75rem; color: var(--text-sub);">+$20.00 - Priority photo turnaround</p>
-              </div>
-            </label>
-          </div>
-
-          <div style="border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 1rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-size: 1rem; font-weight: 600;">Calculated Estimate:</span>
-              <span style="font-size: 1.5rem; font-weight: 800; color: var(--accent);">$<span id="pkg-total-val">20.00</span></span>
-            </div>
-          </div>
+          <h3>Scheduled Bookings</h3>
+          <div id="calendar-bookings-list"></div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <!-- SECTION 4: BOOKING CALENDAR -->
-    <div id="calendar" class="content-section">
-      <div class="section-header">
-        <div>
-          <h1>Booking Calendar Scheduler</h1>
-          <p style="font-size: 0.85rem; color: var(--text-sub);">Schedule shoots with full contact details synced directly to your Client Directory.</p>
+    <!-- PACKAGE ESTIMATOR VIEW -->
+    <section id="view-estimator" class="view-section">
+      <h2>Package Estimator</h2>
+      <div class="card" style="max-width: 600px;">
+        <div class="form-group">
+          <label>Select Shoot Tier</label>
+          <select id="est-tier" onchange="calculateEstimate()">
+            <option value="150">Standard Fleet Session ($150)</option>
+            <option value="300">Comprehensive Department Package ($300)</option>
+            <option value="500">Full Agency Multi-Location Cover ($500)</option>
+          </select>
         </div>
-        <button class="action-btn" onclick="openModal()">+ Schedule Shoot</button>
+        <div class="form-group">
+          <label>Number of Vehicles / Units</label>
+          <input type="number" id="est-units" value="1" min="1" oninput="calculateEstimate()">
+        </div>
+        <div style="background: var(--bg); padding: 1rem; border-radius: 6px; margin-top: 1.5rem; text-align: center;">
+          <p style="margin: 0; font-size: 0.85rem;">Estimated Total</p>
+          <h2 id="est-total" style="margin-top: 0.2rem; color: var(--accent);">$150.00</h2>
+        </div>
       </div>
+    </section>
 
+    <!-- INVOICE GENERATOR VIEW -->
+    <section id="view-invoices" class="view-section">
+      <h2>Invoice Generator</h2>
+      <div class="card" style="max-width: 600px;">
+        <div class="form-group">
+          <label>Billed To (Client)</label>
+          <input type="text" id="inv-client" placeholder="Client Name">
+        </div>
+        <div class="form-group">
+          <label>Description of Services</label>
+          <textarea id="inv-desc" rows="3" placeholder="Emergency vehicle fleet photoshoot..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Total Amount ($)</label>
+          <input type="number" id="inv-amount" placeholder="0.00">
+        </div>
+        <button class="action-btn" onclick="generateInvoice()">Generate & Log Invoice</button>
+      </div>
+    </section>
+
+    <!-- PHOTO DIRECTORY VIEW -->
+    <section id="view-photos" class="view-section">
+      <h2>Photo Directory</h2>
       <div class="card">
-        <div class="cal-header">
-          <button class="sm-btn" onclick="prevMonth()">◀ Prev</button>
-          <h2 id="cal-month-year" style="font-size: 1.1rem;">Month Year</h2>
-          <button class="sm-btn" onclick="nextMonth()">Next ▶</button>
+        <div class="form-group">
+          <label>Select Client Folder</label>
+          <select id="photo-folder-select" onchange="renderPhotoDirectory()">
+            <!-- Dynamically populated -->
+          </select>
         </div>
-
-        <div class="cal-grid" id="calendar-body">
-          <!-- Rendered dynamically -->
-        </div>
-      </div>
-    </div>
-
-    <!-- SECTION 5: PHOTO DIRECTORY -->
-    <div id="directory" class="content-section">
-      <div class="section-header">
-        <h1>Media Directory Manager</h1>
-        <button class="action-btn" id="upload-btn" onclick="triggerPhotoSelect()">📷 Upload Photos</button>
-        <input type="file" id="file-upload-input" multiple accept="image/*" style="display:none;" onchange="handleFileUpload(event)">
-      </div>
-
-      <div class="card" style="margin-bottom: 1.5rem;">
-        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-          <input type="text" id="dir-client-input" placeholder="Enter new folder / client name..." style="flex: 1; min-width: 200px;">
-          <button class="sm-btn" onclick="deleteActiveDirectory()" style="color: var(--danger);">Delete Active Folder</button>
+        <div class="photo-grid" id="admin-photo-grid">
+          <!-- Dynamically populated -->
         </div>
       </div>
+    </section>
 
-      <div class="dir-badges" id="directory-badges-list">
-        <!-- Dynamic Folders -->
-      </div>
-
-      <div class="card">
-        <h3 id="active-dir-title">Active Directory: General</h3>
-        <div class="photo-grid" id="photo-grid-container">
-          <!-- Dynamic Photos -->
+    <!-- PRINT RELEASE VIEW -->
+    <section id="view-printrelease" class="view-section">
+      <h2>Print Release Generator</h2>
+      <div class="card" style="max-width: 600px;">
+        <div class="form-group">
+          <label>Authorized Client Name</label>
+          <input type="text" id="pr-client" placeholder="Agency or Client Name">
         </div>
-      </div>
-    </div>
-
-    <!-- SECTION 6: INVOICE GENERATOR -->
-    <div id="invoice" class="content-section">
-      <div class="section-header">
-        <div>
-          <h1>Client Invoice Generator</h1>
-          <p>Generate, format, and print standard service invoices for your clients.</p>
+        <div class="form-group">
+          <label>Allowed Usage Scope</label>
+          <input type="text" id="pr-scope" value="Non-commercial digital & physical print distribution">
         </div>
-        <button class="action-btn" onclick="window.print()">🖨️ Print / Save PDF</button>
+        <button class="action-btn" onclick="alert('Print release configured successfully for ' + document.getElementById('pr-client').value)">Issue Print Release</button>
       </div>
-
-      <div class="document-container">
-        <table class="doc-table">
-          <tr>
-            <td class="doc-logo-cell">
-              <div style="font-weight: 800; font-size: 1.5rem; letter-spacing: 2px; text-transform: uppercase; line-height: 1.1;">PRESTIGE</div>
-              <div style="font-size: 0.7rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; margin-top: 2px;">PHOTOGRAPHY</div>
-            </td>
-            <td colspan="2" style="vertical-align: middle;">
-              <div class="doc-header-title">SERVICE INVOICE</div>
-              <div style="font-size: 0.75rem; text-align: center; margin-top: 4px; font-weight: 600;">PORTFOLIO & DIGITAL MEDIA SERVICES</div>
-            </td>
-          </tr>
-          <tr>
-            <td style="width: 50%;">
-              <strong>CLIENT NAME:</strong><br>
-              <input type="text" class="doc-input-inline" placeholder="Client Name" id="inv-client-name"><br><br>
-              <strong>LOCATION / AGENCY:</strong><br>
-              <input type="text" class="doc-input-inline" placeholder="City or Organization" id="inv-client-loc">
-            </td>
-            <td colspan="2" style="width: 50%;">
-              <strong>INVOICE #:</strong> <input type="text" class="doc-input-inline" style="width: 50%;" value="INV-2026-001"><br><br>
-              <strong>DATE:</strong> <input type="date" class="doc-input-inline" style="width: 50%;" id="inv-date"><br><br>
-              <strong>DUE DATE:</strong> <input type="date" class="doc-input-inline" style="width: 50%;" id="inv-due-date">
-            </td>
-          </tr>
-          <tr>
-            <th style="text-align: left;">DESCRIPTION / SERVICE TIER</th>
-            <th style="width: 15%; text-align: center;">QTY / FLEET</th>
-            <th style="width: 25%; text-align: right;">AMOUNT</th>
-          </tr>
-          <tr>
-            <td>
-              <input type="text" class="doc-input-inline" style="width: 95%; font-weight: normal;" id="inv-desc-1" value="Standard Photography Coverage & Editing">
-            </td>
-            <td style="text-align: center;">
-              <input type="text" class="doc-input-inline" style="width: 80%; text-align: center;" id="inv-qty-1" value="1">
-            </td>
-            <td style="text-align: right;">
-              $<input type="text" class="doc-input-inline" style="width: 70%; text-align: right;" value="20.00" id="inv-amt-1" oninput="calculateInvoiceTotals()">
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <input type="text" class="doc-input-inline" style="width: 95%; font-weight: normal;" id="inv-desc-2" placeholder="Add-on Service / Location Fee">
-            </td>
-            <td style="text-align: center;">
-              <input type="text" class="doc-input-inline" style="width: 80%; text-align: center;" id="inv-qty-2" value="0">
-            </td>
-            <td style="text-align: right;">
-              $<input type="text" class="doc-input-inline" style="width: 70%; text-align: right;" value="0.00" id="inv-amt-2" oninput="calculateInvoiceTotals()">
-            </td>
-          </tr>
-          <tr>
-            <td colspan="2" style="text-align: right; font-weight: 700;">SUBTOTAL:</td>
-            <td style="text-align: right; font-weight: 700;">$<span id="inv-subtotal">20.00</span></td>
-          </tr>
-          <tr>
-            <td colspan="2" style="text-align: right; font-weight: 800; font-size: 1rem;">TOTAL BALANCE DUE:</td>
-            <td style="text-align: right; font-weight: 800; font-size: 1rem; color: #000;">$<span id="inv-total">20.00</span></td>
-          </tr>
-          <tr>
-            <td colspan="3" style="font-size: 0.78rem; text-align: center; padding: 12px; font-weight: 600;">
-              Thank you for choosing Prestige Photography. Digital delivery links will be transmitted upon payment clearance.
-            </td>
-          </tr>
-        </table>
-      </div>
-    </div>
-
-    <!-- SECTION 7: PRINT RELEASE FORM -->
-    <div id="contract" class="content-section">
-      <div class="section-header">
-        <div>
-          <h1>Client Print Release Form</h1>
-          <p>Generate digital media authorization agreements with client signature capture.</p>
-        </div>
-        <button class="action-btn" onclick="window.print()">🖨️ Print / Save PDF</button>
-      </div>
-
-      <div class="document-container">
-        <table class="doc-table">
-          <tr>
-            <td class="doc-logo-cell">
-              <div style="font-weight: 800; font-size: 1.5rem; letter-spacing: 2px; text-transform: uppercase; line-height: 1.1;">PRESTIGE</div>
-              <div style="font-size: 0.7rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; margin-top: 2px;">PHOTOGRAPHY</div>
-            </td>
-            <td style="vertical-align: middle;">
-              <div class="doc-header-title">DIGITAL MEDIA & PRINT RELEASE</div>
-              <div style="font-size: 0.75rem; text-align: center; margin-top: 4px; font-weight: 600;">AUTHORIZATION & USAGE AGREEMENT</div>
-            </td>
-          </tr>
-          <tr>
-            <td colspan="2">
-              <strong>CLIENT AUTHORIZATION DETAILS:</strong><br><br>
-              <strong>Client Name:</strong> <input type="text" class="doc-input-inline" style="width: 70%;" placeholder="Full Name or Department Name" id="rel-client-name"><br><br>
-              <strong>Date of Release:</strong> <input type="date" class="doc-input-inline" style="width: 40%;" id="rel-date"><br><br>
-              <strong>Delivered Gallery / Session ID:</strong> <input type="text" class="doc-input-inline" style="width: 50%;" placeholder="e.g. Shoot #1042">
-            </td>
-          </tr>
-          <tr>
-            <td colspan="2" style="line-height: 1.5; font-size: 0.82rem;">
-              <strong>TERMS OF USE & LICENSING AUTHORIZATION:</strong><br><br>
-              1. <strong>Grant of License:</strong> Prestige Photography grants the client non-exclusive, perpetual rights to print, display, copy, and publish all high-resolution digital media files delivered in connection with this session.<br>
-              2. <strong>Commercial Usage:</strong> Media files provided under this release may be utilized for personal display, organizational public relations, agency marketing, and official social channels.<br>
-              3. <strong>Copyright Ownership:</strong> Prestige Photography retains original copyright ownership of all digital assets produced. Uncredited resale or distribution to third-party commercial entities without express consent remains prohibited.
-            </td>
-          </tr>
-          <tr>
-            <td colspan="2">
-              <div style="margin-bottom: 8px; font-weight: 700; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center;">
-                <span>CLIENT DIGITAL SIGNATURE:</span>
-                <button class="clear-sig-btn" onclick="clearSignature()" style="background: transparent; border: 1px solid #000; padding: 2px 8px; font-size: 0.7rem; border-radius: 4px; cursor: pointer; font-weight: 600;">Clear Canvas</button>
-              </div>
-              <canvas id="sig-canvas"></canvas>
-            </td>
-          </tr>
-        </table>
-      </div>
-    </div>
-
+    </section>
   </main>
 
-  <!-- ADD CLIENT MODAL -->
-  <div class="modal-overlay" id="client-modal">
-    <div class="modal-box">
-      <h3 style="margin-bottom: 1rem;">Add Client Profile</h3>
-      <div class="form-group">
-        <label>Client / Agency Name</label>
-        <input type="text" id="c-name" placeholder="e.g. Oklahoma City Fleet Services">
+  <!-- PRINTABLE BARCODE LABEL MODAL -->
+  <div class="modal-backdrop" id="print-label-modal">
+    <div class="modal-content" style="text-align: center; max-width: 320px;">
+      <button class="modal-close" onclick="closeLabelModal()">&times;</button>
+      <div id="label-preview-content" style="background: white; color: black; padding: 15px; border-radius: 4px; border: 1px dashed #666; display: inline-block; width: 100%;">
+        <h4 id="label-item-name" style="font-size: 1rem; font-weight: bold; margin-bottom: 6px;">Item Name</h4>
+        <div id="label-barcode-container" style="margin: 6px 0; font-family: 'Courier New', Courier, monospace; letter-spacing: 4px; font-size: 1.4rem; font-weight: bold;">||| | |||| || |</div>
+        <div id="label-asset-id" style="font-size: 1.1rem; font-weight: 500; margin-top: 4px;">AST-1001</div>
       </div>
-      <div class="form-group">
-        <label>Physical Address</label>
-        <input type="text" id="c-address" placeholder="123 S Main St, Moore, OK">
-      </div>
-      <div class="form-group">
-        <label>Phone Number</label>
-        <input type="text" id="c-phone" placeholder="(405) 555-0199">
-      </div>
-      <div class="form-group">
-        <label>Email Address</label>
-        <input type="text" id="c-email" placeholder="contact@agency.org">
-      </div>
-      <div style="display: flex; gap: 8px; margin-top: 1.5rem; justify-content: flex-end;">
-        <button class="sm-btn" onclick="closeAddClientModal()">Cancel</button>
-        <button class="action-btn" onclick="addClientEntry()">Save Profile</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- UPGRADED EVENT BOOKING MODAL (WITH FULL CLIENT AUTOCREATE / AUTOFILL) -->
-  <div class="modal-overlay" id="event-modal">
-    <div class="modal-box">
-      <h3 style="margin-bottom: 1rem;">Schedule Shoot & Sync Client</h3>
-      
-      <div class="form-group">
-        <label>Client / Agency Name (Type to auto-complete from directory)</label>
-        <input type="text" id="m-client" placeholder="e.g. City Police Fleet Shoot" autocomplete="off" oninput="showClientSuggestions(this.value)">
-        <div id="client-autocomplete-list" class="autocomplete-list"></div>
-      </div>
-
-      <div class="form-group">
-        <label>Shoot Location / Client Address</label>
-        <input type="text" id="m-address" placeholder="e.g. 100 N Broadway, Oklahoma City">
-      </div>
-
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-        <div class="form-group">
-          <label>Contact Phone</label>
-          <input type="text" id="m-phone" placeholder="(405) 000-0000">
-        </div>
-        <div class="form-group">
-          <label>Email Address</label>
-          <input type="text" id="m-email" placeholder="client@agency.org">
-        </div>
-      </div>
-
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-        <div class="form-group">
-          <label>Shoot Date</label>
-          <input type="date" id="m-date">
-        </div>
-        <div class="form-group">
-          <label>Shoot Time</label>
-          <input type="text" id="m-time" placeholder="e.g. 2:00 PM">
-        </div>
-      </div>
-
-      <p style="font-size: 0.75rem; color: #60a5fa; margin-top: 4px;">
-        ℹ️ Tip: Entering a new client name automatically creates a record in your Client Directory!
-      </p>
-
-      <div style="display: flex; gap: 8px; margin-top: 1.5rem; justify-content: flex-end;">
-        <button class="sm-btn" onclick="closeModal()">Cancel</button>
-        <button class="action-btn" onclick="addCalendarEvent()">Save Booking</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- EVENT DETAILS VIEW MODAL -->
-  <div class="modal-overlay" id="event-details-modal">
-    <div class="modal-box">
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
-        <div>
-          <span class="badge-pill badge-blue" id="ed-time-badge" style="margin-bottom: 6px;">Shoot Time</span>
-          <h3 id="ed-client-name" style="font-size: 1.25rem;">Client Name</h3>
-        </div>
-        <button class="sm-btn" onclick="closeEventDetailsModal()">✕</button>
-      </div>
-
-      <div style="background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px; font-size: 0.88rem; display: flex; flex-direction: column; gap: 8px;">
-        <div>
-          <span style="color: var(--text-sub); font-size: 0.75rem; display: block;">SHOOT DATE:</span>
-          <strong id="ed-date">Date</strong>
-        </div>
-        <div>
-          <span style="color: var(--text-sub); font-size: 0.75rem; display: block;">LOCATION / ADDRESS:</span>
-          <span id="ed-address">No address provided</span>
-        </div>
-        <div>
-          <span style="color: var(--text-sub); font-size: 0.75rem; display: block;">CONTACT PHONE:</span>
-          <span id="ed-phone">No phone provided</span>
-        </div>
-        <div>
-          <span style="color: var(--text-sub); font-size: 0.75rem; display: block;">EMAIL ADDRESS:</span>
-          <span id="ed-email">No email provided</span>
-        </div>
-      </div>
-
-      <div style="display: flex; gap: 8px; margin-top: 1.5rem; justify-content: space-between;">
-        <button class="sm-btn" onclick="jumpToDirectoryFromBooking()" style="color: #60a5fa; border-color: rgba(59,130,246,0.4);">📷 Open Photo Directory</button>
-        <button class="action-btn" onclick="deleteEventFromDetails()" style="background: var(--danger);">Cancel / Delete Shoot</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- LIGHTBOX IMAGE MODAL -->
-  <div class="modal-overlay" id="lightbox" onclick="closeLightbox()">
-    <div style="max-width: 90%; max-height: 90%;">
-      <img id="lightbox-img" src="" style="max-width: 100%; max-height: 80vh; border-radius: 8px; border: 1px solid var(--border);" alt="Preview">
+      <button class="action-btn" style="width: 100%; margin-top: 1.2rem;" onclick="window.print()">Print Label</button>
     </div>
   </div>
 
   <script>
-    /* 1. FIREBASE CONFIGURATION */
-    const firebaseConfig = {
-      apiKey: "AIzaSyBEmLZUiCyxh1KSCbwy59OdJjmGQwoeNFc",
-      authDomain: "prestige-app-10027.firebaseapp.com",
-      databaseURL: "https://prestige-app-10027-default-rtdb.firebaseio.com",
-      projectId: "prestige-app-10027",
-      storageBucket: "prestige-app-10027.firebasestorage.app"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    /* 2. GLOBAL STATE */
-    let currentPin = "1234";
-    let enteredPin = "";
+    // Master State Storage
     let appData = {
-      notes: [],
-      events: [],
-      clients: [],
-      galleries: { "General": [] }
+      clients: [
+        { name: "Oklahoma City Police Dept", phone: "405-555-0192", email: "fleet@okc.gov" },
+        { name: "Moore Fire Department", phone: "405-555-8841", email: "media@moorefire.org" }
+      ],
+      assets: [
+        { name: "Sony Alpha a7 IV Body", serial: "SN-94821034", assetId: "AST-5001" },
+        { name: "Canon EOS R5 Body", serial: "SN-33921840", assetId: "AST-5002" },
+        { name: "DJI Mavic 3 Pro Drone", serial: "SN-DRN88392", assetId: "AST-5003" }
+      ],
+      events: [
+        { name: "Oklahoma City Police Dept", date: "2026-07-15 10:00", address: "Downtown Precinct" }
+      ],
+      invoices: [
+        { client: "Oklahoma City Police Dept", desc: "Fleet Cruiser Photoshoot", amount: "300.00" }
+      ],
+      galleries: {
+        "Oklahoma City Police Dept": [
+          { src: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=400", name: "Cruiser_01.jpg" },
+          { src: "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=400", name: "Cruiser_02.jpg" }
+        ],
+        "Moore Fire Department": [
+          { src: "https://images.unsplash.com/photo-1508974239320-0a029497e820?w=400", name: "Engine_01.jpg" }
+        ]
+      }
     };
-    let activeDirectory = "General";
-    let calMonth = new Date().getMonth();
-    let calYear = new Date().getFullYear();
-    let selectedEventIdForDetails = null;
-    let selectedClientNameForDetails = null;
 
-    /* 3. FIREBASE REAL-TIME LISTENERS */
-    window.addEventListener('DOMContentLoaded', () => {
-      calculatePackageTotal();
+    // View Switching Controller
+    function switchView(viewId) {
+      document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
       
-      const today = new Date().toISOString().split('T')[0];
-      if (document.getElementById('inv-date')) document.getElementById('inv-date').value = today;
-      if (document.getElementById('rel-date')) document.getElementById('rel-date').value = today;
+      const target = document.getElementById('view-' + viewId);
+      if (target) target.classList.add('active');
 
-      // Sync PIN
-      db.ref('pin').on('value', snapshot => {
-        if (snapshot.exists()) {
-          currentPin = snapshot.val();
-        } else {
-          db.ref('pin').set("1234");
+      const navButtons = document.querySelectorAll('.nav-btn');
+      navButtons.forEach(btn => {
+        if (btn.getAttribute('onclick').includes(viewId)) {
+          btn.classList.add('active');
         }
       });
 
-      // Sync Notes
-      db.ref('notes').on('value', snapshot => {
-        appData.notes = [];
-        if (snapshot.exists()) {
-          snapshot.forEach(child => {
-            appData.notes.push({ id: child.key, ...child.val() });
-          });
-        }
-        renderNotes();
-      });
-
-      // Sync Clients Spreadsheet Ledger
-      db.ref('clients').on('value', snapshot => {
-        appData.clients = [];
-        if (snapshot.exists()) {
-          snapshot.forEach(child => {
-            appData.clients.push({ id: child.key, ...child.val() });
-          });
-        }
-        renderClientSheet();
-      });
-
-      // Sync Calendar Events
-      db.ref('events').on('value', snapshot => {
-        appData.events = [];
-        if (snapshot.exists()) {
-          snapshot.forEach(child => {
-            appData.events.push({ id: child.key, ...child.val() });
-          });
-        }
-        renderCalendar();
-        renderClientSheet();
-      });
-
-      // Sync Media Galleries
-      db.ref('galleries').on('value', snapshot => {
-        appData.galleries = { "General": [] };
-        if (snapshot.exists()) {
-          snapshot.forEach(dirSnap => {
-            const dirName = dirSnap.key;
-            appData.galleries[dirName] = [];
-            dirSnap.forEach(imgSnap => {
-              appData.galleries[dirName].push({ id: imgSnap.key, ...imgSnap.val() });
-            });
-          });
-        }
-        renderDirectories();
-        renderGallery();
-        renderClientSheet();
-      });
-
-      // Close autocomplete on click outside
-      document.addEventListener('click', (e) => {
-        if (!e.target.closest('#m-client') && !e.target.closest('#client-autocomplete-list')) {
-          document.getElementById('client-autocomplete-list').style.display = 'none';
-        }
-      });
-    });
-
-    /* SECURITY LOCK & NUMPAD */
-    function enterDigit(digit) {
-      if (enteredPin.length < 4) {
-        enteredPin += digit;
-        updatePinDots();
-      }
-      if (enteredPin.length === 4) {
-        setTimeout(verifyPin, 100);
-      }
+      if (viewId === 'clients') renderClientDirectory();
+      if (viewId === 'assets') renderAssetDirectory();
+      if (viewId === 'calendar') renderCalendarBookings();
+      if (viewId === 'photos') populatePhotoFolders();
+      if (viewId === 'dashboard') updateDashboardMetrics();
     }
 
-    function clearPin() {
-      enteredPin = "";
-      updatePinDots();
+    // Dashboard Metrics
+    function updateDashboardMetrics() {
+      document.getElementById('dash-client-count').innerText = appData.clients.length;
+      document.getElementById('dash-asset-count').innerText = appData.assets.length;
+      document.getElementById('dash-booking-count').innerText = appData.events.length;
     }
 
-    function updatePinDots() {
-      for (let i = 1; i <= 4; i++) {
-        const dot = document.getElementById(`dot${i}`);
-        if (dot) {
-          if (i <= enteredPin.length) dot.classList.add('active');
-          else dot.classList.remove('active');
-        }
-      }
-    }
-
-    function verifyPin() {
-      if (enteredPin === currentPin) {
-        document.getElementById('lock-screen').style.display = 'none';
-        enteredPin = "";
-        updatePinDots();
-      } else {
-        alert("Incorrect PIN code!");
-        clearPin();
-      }
-    }
-
-    function lockApp() {
-      clearPin();
-      document.getElementById('lock-screen').style.display = 'flex';
-    }
-
-    function triggerChangePin() {
-      const oldPin = prompt("Enter Current PIN:");
-      if (oldPin === currentPin) {
-        const newPin = prompt("Enter New 4-Digit PIN:");
-        if (newPin && newPin.length === 4 && !isNaN(newPin)) {
-          db.ref('pin').set(newPin);
-          alert("PIN code updated in Firebase!");
-        } else {
-          alert("Invalid PIN format. Must be 4 digits.");
-        }
-      } else if (oldPin !== null) {
-        alert("Incorrect current PIN.");
-      }
-    }
-
-    /* NAVIGATION */
-    function switchTab(tabId, btn) {
-      document.querySelectorAll('.content-section').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    // Client Directory
+    function renderClientDirectory() {
+      const tbody = document.getElementById('client-directory-table');
+      tbody.innerHTML = '';
       
-      document.getElementById(tabId).classList.add('active');
-      if (btn) btn.classList.add('active');
-
-      if (window.innerWidth <= 991) {
-        document.getElementById('sidebar-drawer').classList.remove('open');
-      }
-
-      if (tabId === 'contract') {
-        setTimeout(initSignatureCanvas, 50);
-      }
-    }
-
-    function toggleMobileSidebar() {
-      document.getElementById('sidebar-drawer').classList.toggle('open');
-    }
-
-    /* CLIENT DIRECTORY SPREADSHEET ENGINE - FIXED FUZZY MATCHING */
-    function renderClientSheet() {
-      const body = document.getElementById('client-sheet-body');
-      if (!body) return;
-      body.innerHTML = '';
-
-      const searchVal = (document.getElementById('client-search-input')?.value || '').toLowerCase();
-
-      const filtered = appData.clients.filter(c => {
-        return (c.name || '').toLowerCase().includes(searchVal) ||
-               (c.address || '').toLowerCase().includes(searchVal) ||
-               (c.phone || '').toLowerCase().includes(searchVal) ||
-               (c.email || '').toLowerCase().includes(searchVal);
-      });
-
-      if (filtered.length === 0) {
-        body.innerHTML = `<tr><td colspan="6" style="text-align:center; color: var(--text-sub); padding: 1.5rem;">No client records match your search query. Click "+ Add Client Profile" above to create one.</td></tr>`;
-        return;
-      }
-
-      filtered.forEach(c => {
-        const cName = (c.name || '').trim().toLowerCase();
-        const cPhone = (c.phone || '').trim();
-        const cEmail = (c.email || '').trim().toLowerCase();
-
-        // Robust matching: Check if trimmed Name, Phone, or Email matches any event
-        const clientEvents = appData.events.filter(e => {
-          const eName = (e.client || '').trim().toLowerCase();
-          const ePhone = (e.phone || '').trim();
-          const eEmail = (e.email || '').trim().toLowerCase();
-          
-          return (eName && eName === cName) ||
-                 (cPhone && ePhone && ePhone === cPhone) ||
-                 (cEmail && eEmail && eEmail === cEmail);
-        });
-
-        clientEvents.sort((a, b) => new Date(a.date) - new Date(b.date));
-        
-        // Match any upcoming shoot today or in the future
-        const todayStr = new Date().toISOString().split('T')[0];
-        const upcoming = clientEvents.find(e => e.date >= todayStr) || clientEvents[clientEvents.length - 1];
-
-        const nextBookingBadge = upcoming 
-          ? `<span class="badge-pill badge-green" style="cursor:pointer;" onclick="openEventDetailsModal('${upcoming.id}')" title="Click to view booking">📅 ${upcoming.date} (${upcoming.time || '12:00 PM'})</span>` 
-          : `<span class="badge-pill badge-blue">None Scheduled</span>`;
-
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>
-            <input type="text" class="sheet-input" value="${c.name || ''}" onchange="updateClientField('${c.id}', 'name', this.value)" style="font-weight:700;">
-          </td>
-          <td>
-            <input type="text" class="sheet-input" value="${c.address || ''}" placeholder="Street, City, OK" onchange="updateClientField('${c.id}', 'address', this.value)">
-          </td>
-          <td>
-            <input type="text" class="sheet-input" value="${c.phone || ''}" placeholder="(405) 000-0000" onchange="updateClientField('${c.id}', 'phone', this.value)">
-          </td>
-          <td>
-            <input type="text" class="sheet-input" value="${c.email || ''}" placeholder="email@domain.com" onchange="updateClientField('${c.id}', 'email', this.value)">
-          </td>
-          <td style="text-align:center;">${nextBookingBadge}</td>
-          <td>
-            <div style="display:flex; gap:4px;">
-              <button class="sm-btn" onclick="openClientDirectoryFolder('${c.name}')" title="View Media Folder">📷 Photos</button>
-              <button class="sm-btn" onclick="deleteClientProfile('${c.id}')" style="color:var(--danger);" title="Remove Client">✕</button>
-            </div>
-          </td>
+      appData.clients.forEach((c, index) => {
+        tbody.innerHTML += `
+          <tr>
+            <td><strong>${c.name}</strong></td>
+            <td>${c.phone || 'No Phone'}</td>
+            <td>${c.email || 'No Email'}</td>
+            <td><button class="sm-btn" onclick="removeClient(${index})">Delete</button></td>
+          </tr>
         `;
-        body.appendChild(tr);
       });
     }
 
-    function updateClientField(id, field, value) {
-      db.ref(`clients/${id}/${field}`).set(value.trim());
+    function addClient() {
+      const name = prompt("Enter client or agency name:");
+      if (!name) return;
+      const phone = prompt("Enter contact phone:") || "";
+      const email = prompt("Enter contact email:") || "";
+
+      appData.clients.push({ name, phone, email });
+      if (!appData.galleries[name]) appData.galleries[name] = [];
+      renderClientDirectory();
+      updateDashboardMetrics();
     }
 
-    function openAddClientModal() {
-      document.getElementById('client-modal').style.display = 'flex';
+    function removeClient(index) {
+      if (confirm("Are you sure you want to remove this client?")) {
+        appData.clients.splice(index, 1);
+        renderClientDirectory();
+        updateDashboardMetrics();
+      }
     }
 
-    function closeAddClientModal() {
-      document.getElementById('client-modal').style.display = 'none';
-      document.getElementById('c-name').value = '';
-      document.getElementById('c-address').value = '';
-      document.getElementById('c-phone').value = '';
-      document.getElementById('c-email').value = '';
+    // Equipment Asset Directory & Barcode Label Printing
+    function renderAssetDirectory() {
+      const tbody = document.getElementById('asset-directory-table');
+      tbody.innerHTML = '';
+      
+      appData.assets.forEach((item, index) => {
+        tbody.innerHTML += `
+          <tr>
+            <td><strong>${item.name}</strong></td>
+            <td>${item.serial}</td>
+            <td><code>${item.assetId}</code></td>
+            <td style="display: flex; gap: 6px;">
+              <button class="sm-btn" onclick="openLabelModal(${index})">Print Label</button>
+              <button class="sm-btn" style="background: var(--danger);" onclick="removeAsset(${index})">Delete</button>
+            </td>
+          </tr>
+        `;
+      });
     }
 
-    function addClientEntry() {
-      const name = document.getElementById('c-name').value.trim();
-      const address = document.getElementById('c-address').value.trim();
-      const phone = document.getElementById('c-phone').value.trim();
-      const email = document.getElementById('c-email').value.trim();
+    function addAsset() {
+      const name = prompt("Enter equipment name (e.g. Sony A7IV Camera):");
+      if (!name) return;
+      const serial = prompt("Enter serial number:") || "N/A";
+      const randomId = "AST-" + Math.floor(1000 + Math.random() * 9000);
+      const assetId = prompt("Confirm or edit Asset ID:", randomId) || randomId;
 
-      if (!name) {
-        alert("Client Name is required!");
+      appData.assets.push({ name, serial, assetId });
+      renderAssetDirectory();
+      updateDashboardMetrics();
+    }
+
+    function removeAsset(index) {
+      if (confirm("Are you sure you want to remove this asset?")) {
+        appData.assets.splice(index, 1);
+        renderAssetDirectory();
+        updateDashboardMetrics();
+      }
+    }
+
+    function openLabelModal(index) {
+      const item = appData.assets[index];
+      document.getElementById('label-item-name').innerText = item.name;
+      // Generate faux barcode visual representation using asset ID
+      document.getElementById('label-barcode-container').innerText = `*${item.assetId}*`;
+      document.getElementById('label-asset-id').innerText = item.assetId;
+      document.getElementById('print-label-modal').style.display = 'flex';
+    }
+
+    function closeLabelModal() {
+      document.getElementById('print-label-modal').style.display = 'none';
+    }
+
+    // Calendar Bookings
+    function saveBooking() {
+      const name = document.getElementById('booking-client-name').value.trim();
+      const datetime = document.getElementById('booking-datetime').value;
+      const address = document.getElementById('booking-location').value.trim();
+
+      if (!name || !datetime) {
+        alert("Please provide a client name and date/time.");
         return;
       }
 
-      db.ref('clients').push({
-        name: name,
-        address: address,
-        phone: phone,
-        email: email
-      });
-
-      closeAddClientModal();
+      appData.events.push({ name, date: datetime, address });
+      document.getElementById('booking-client-name').value = '';
+      document.getElementById('booking-datetime').value = '';
+      document.getElementById('booking-location').value = '';
+      renderCalendarBookings();
+      alert("Shoot scheduled successfully!");
     }
 
-    function deleteClientProfile(id) {
-      if (confirm("Are you sure you want to remove this client from the directory?")) {
-        db.ref(`clients/${id}`).remove();
-      }
-    }
-
-    function openClientDirectoryFolder(clientName) {
-      if (!clientName) return;
-      activeDirectory = clientName;
-      if (!appData.galleries[clientName]) {
-        appData.galleries[clientName] = [];
-      }
-      switchTab('directory');
-      renderDirectories();
-      renderGallery();
-    }
-
-    /* PACKAGE ESTIMATOR & INVOICE ENGINE */
-    function calculatePackageTotal() {
-      const radios = document.getElementsByName('pkg_tier');
-      let basePrice = 20;
-      let selectedName = "Standard Photography Coverage & Editing";
-      let mainQty = "1";
-
-      radios.forEach(r => {
-        if (r.checked) {
-          if (r.value === 'auto') {
-            const countInput = document.getElementById('car-count-input');
-            const count = parseInt(countInput.value) || 1;
-            const sets = Math.ceil(count / 10);
-            basePrice = sets * 75;
-            selectedName = `Automotive Fleet Shoot (${count} Vehicles)`;
-            mainQty = `${count}`;
-            document.getElementById('auto-counter-box').style.display = 'block';
-          } else {
-            basePrice = parseFloat(r.value);
-            selectedName = r.parentElement.querySelector('h4').innerText;
-            if (r.value !== '150') {
-              selectedName += " Coverage";
-            }
-            mainQty = "1";
-            document.getElementById('auto-counter-box').style.display = 'none';
-          }
-        }
-      });
-
-      const extraLocs = parseInt(document.getElementById('extra-loc-count').value) || 0;
-      let extraLocPrice = extraLocs * 10;
-      
-      let rushDelivery = false;
-      document.querySelectorAll('.pkg-addon').forEach(chk => {
-        if (chk.checked) rushDelivery = true;
-      });
-
-      const total = basePrice + extraLocPrice + (rushDelivery ? 20 : 0);
-      document.getElementById('pkg-total-val').innerText = total.toFixed(2);
-      document.getElementById('stat-calc-total').innerText = `$${total.toFixed(2)}`;
-      document.getElementById('stat-selected-name').innerText = selectedName;
-
-      const invDesc1 = document.getElementById('inv-desc-1');
-      const invQty1 = document.getElementById('inv-qty-1');
-      const invAmt1 = document.getElementById('inv-amt-1');
-      
-      const invDesc2 = document.getElementById('inv-desc-2');
-      const invQty2 = document.getElementById('inv-qty-2');
-      const invAmt2 = document.getElementById('inv-amt-2');
-
-      if (invDesc1 && invAmt1 && invQty1) {
-        invDesc1.value = selectedName;
-        invQty1.value = mainQty;
-        invAmt1.value = basePrice.toFixed(2);
-      }
-
-      if (invDesc2 && invAmt2 && invQty2) {
-        let addOnDetails = [];
-        let addonSubtotal = 0;
-
-        if (extraLocs > 0) {
-          addOnDetails.push(`${extraLocs}x Extra Location Stop(s)`);
-          addonSubtotal += extraLocPrice;
-        }
-        if (rushDelivery) {
-          addOnDetails.push('Rush Gallery Delivery');
-          addonSubtotal += 20;
-        }
-
-        if (addOnDetails.length > 0) {
-          invDesc2.value = addOnDetails.join(' + ');
-          invQty2.value = '1';
-          invAmt2.value = addonSubtotal.toFixed(2);
-        } else {
-          invDesc2.value = '';
-          invQty2.value = '0';
-          invAmt2.value = '0.00';
-        }
-      }
-
-      calculateInvoiceTotals();
-    }
-
-    /* CALENDAR SCHEDULER & CLIENT SYNC ENGINE */
-    function renderCalendar() {
-      const calBody = document.getElementById('calendar-body');
-      if (!calBody) return;
-      calBody.innerHTML = '';
-
-      const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-      document.getElementById('cal-month-year').innerText = `${monthNames[calMonth]} ${calYear}`;
-
-      const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-      days.forEach(d => {
-        const h = document.createElement('div');
-        h.className = 'cal-day-header';
-        h.innerText = d;
-        calBody.appendChild(h);
-      });
-
-      const firstDay = new Date(calYear, calMonth, 1).getDay();
-      const totalDays = new Date(calYear, calMonth + 1, 0).getDate();
-
-      for (let i = 0; i < firstDay; i++) {
-        const emptyCell = document.createElement('div');
-        emptyCell.className = 'cal-cell empty';
-        calBody.appendChild(emptyCell);
-      }
-
-      for (let day = 1; day <= totalDays; day++) {
-        const cell = document.createElement('div');
-        cell.className = 'cal-cell';
-        cell.onclick = () => openModalWithDate(day);
-
-        const num = document.createElement('div');
-        num.className = 'cal-num';
-        num.innerText = day;
-        cell.appendChild(num);
-
-        const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        
-        if (appData.events) {
-          appData.events.filter(e => e.date === dateStr).forEach(e => {
-            const tag = document.createElement('div');
-            tag.className = 'event-tag';
-            tag.onclick = (evt) => {
-              evt.stopPropagation();
-              openEventDetailsModal(e.id);
-            };
-
-            tag.innerHTML = `
-              <div class="event-tag-header">
-                <span>🕒 ${e.time || '12:00 PM'}</span>
-                <span>ℹ️</span>
-              </div>
-              <div class="event-tag-client">${e.client}</div>
-            `;
-            cell.appendChild(tag);
-          });
-        }
-
-        calBody.appendChild(cell);
-      }
-
-      document.getElementById('stat-booking-count').innerText = `${appData.events ? appData.events.length : 0} Shoots`;
-    }
-
-    function prevMonth() {
-      calMonth--;
-      if (calMonth < 0) { calMonth = 11; calYear--; }
-      renderCalendar();
-    }
-
-    function nextMonth() {
-      calMonth++;
-      if (calMonth > 11) { calMonth = 0; calYear++; }
-      renderCalendar();
-    }
-
-    function openModal() {
-      document.getElementById('event-modal').style.display = 'flex';
-    }
-
-    function openModalWithDate(day) {
-      const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-      document.getElementById('m-date').value = dateStr;
-      openModal();
-    }
-
-    function closeModal() {
-      document.getElementById('event-modal').style.display = 'none';
-      document.getElementById('m-client').value = '';
-      document.getElementById('m-address').value = '';
-      document.getElementById('m-phone').value = '';
-      document.getElementById('m-email').value = '';
-      document.getElementById('m-time').value = '';
-      document.getElementById('client-autocomplete-list').style.display = 'none';
-    }
-
-    /* AUTOCOMPLETE & AUTOFILL FROM DIRECTORY */
-    function showClientSuggestions(query) {
-      const list = document.getElementById('client-autocomplete-list');
-      if (!list) return;
+    function renderCalendarBookings() {
+      const list = document.getElementById('calendar-bookings-list');
       list.innerHTML = '';
-      if (!query || query.trim().length === 0) {
-        list.style.display = 'none';
+      if (appData.events.length === 0) {
+        list.innerHTML = `<p>No bookings scheduled.</p>`;
+        return;
+      }
+      appData.events.forEach(e => {
+        list.innerHTML += `
+          <div style="background: var(--bg); padding: 10px; border-radius: 6px; margin-bottom: 8px; border: 1px solid var(--border);">
+            <strong>📅 ${e.name}</strong>
+            <p style="margin: 2px 0 0 0; font-size: 0.8rem;">${e.date} | 📍 ${e.address || 'TBD'}</p>
+          </div>
+        `;
+      });
+    }
+
+    // Package Estimator
+    function calculateEstimate() {
+      const tierVal = parseFloat(document.getElementById('est-tier').value);
+      const units = parseInt(document.getElementById('est-units').value) || 1;
+      const total = tierVal * units;
+      document.getElementById('est-total').innerText = `$${total.toFixed(2)}`;
+    }
+
+    // Invoice Generator
+    function generateInvoice() {
+      const client = document.getElementById('inv-client').value.trim();
+      const desc = document.getElementById('inv-desc').value.trim();
+      const amount = document.getElementById('inv-amount').value.trim();
+
+      if (!client || !amount) {
+        alert("Please fill in the client name and amount.");
         return;
       }
 
-      const q = query.toLowerCase().trim();
-      const matches = appData.clients.filter(c => (c.name || '').toLowerCase().includes(q));
+      appData.invoices.push({ client, desc, amount });
+      alert("Invoice generated and logged successfully!");
+      document.getElementById('inv-client').value = '';
+      document.getElementById('inv-desc').value = '';
+      document.getElementById('inv-amount').value = '';
+    }
 
-      if (matches.length === 0) {
-        list.style.display = 'none';
-        return;
-      }
-
-      matches.forEach(c => {
-        const item = document.createElement('div');
-        item.className = 'autocomplete-item';
-        item.innerHTML = `<strong>${c.name}</strong> <span style="color:var(--text-sub);">${c.phone || ''}</span>`;
-        item.onclick = () => {
-          document.getElementById('m-client').value = c.name || '';
-          document.getElementById('m-address').value = c.address || '';
-          document.getElementById('m-phone').value = c.phone || '';
-          document.getElementById('m-email').value = c.email || '';
-          list.style.display = 'none';
-        };
-        list.appendChild(item);
+    // Photo Directory
+    function populatePhotoFolders() {
+      const select = document.getElementById('photo-folder-select');
+      select.innerHTML = '';
+      Object.keys(appData.galleries).forEach(folder => {
+        select.innerHTML += `<option value="${folder}">${folder}</option>`;
       });
-
-      list.style.display = 'block';
+      renderPhotoDirectory();
     }
 
-    /* SAVE EVENT WITH ROBUST SYNC TO CLIENT DIRECTORY */
-    function addCalendarEvent() {
-      const client = document.getElementById('m-client').value.trim();
-      const address = document.getElementById('m-address').value.trim();
-      const phone = document.getElementById('m-phone').value.trim();
-      const email = document.getElementById('m-email').value.trim();
-      const date = document.getElementById('m-date').value;
-      const time = document.getElementById('m-time').value.trim() || '12:00 PM';
-
-      if (!client || !date) {
-        alert('Please fill out both the client name and shoot date.');
-        return;
-      }
-
-      // 1. Check if client exists (case and space insensitive check)
-      const existingClient = appData.clients.find(c => (c.name || '').trim().toLowerCase() === client.toLowerCase());
-      if (!existingClient) {
-        db.ref('clients').push({
-          name: client,
-          address: address,
-          phone: phone,
-          email: email
-        });
-      } else {
-        // Backfill missing contact info
-        if (address && !existingClient.address) db.ref(`clients/${existingClient.id}/address`).set(address);
-        if (phone && !existingClient.phone) db.ref(`clients/${existingClient.id}/phone`).set(phone);
-        if (email && !existingClient.email) db.ref(`clients/${existingClient.id}/email`).set(email);
-      }
-
-      // 2. Save full rich event to Firebase
-      db.ref('events').push({
-        client: client,
-        address: address,
-        phone: phone,
-        email: email,
-        date: date,
-        time: time
-      });
-
-      // Autofill invoice and release names
-      const invClient = document.getElementById('inv-client-name');
-      const relClient = document.getElementById('rel-client-name');
-      if (invClient && !invClient.value) invClient.value = client;
-      if (relClient && !relClient.value) relClient.value = client;
-
-      closeModal();
-    }
-
-    /* EVENT DETAILS POPUP MODAL */
-    function openEventDetailsModal(eventId) {
-      const eventObj = appData.events.find(e => e.id === eventId);
-      if (!eventObj) return;
-
-      selectedEventIdForDetails = eventId;
-      selectedClientNameForDetails = eventObj.client;
-
-      const clientProfile = appData.clients.find(c => (c.name || '').trim().toLowerCase() === (eventObj.client || '').trim().toLowerCase()) || {};
-
-      document.getElementById('ed-client-name').innerText = eventObj.client;
-      document.getElementById('ed-time-badge').innerText = `🕒 ${eventObj.time || '12:00 PM'}`;
-      document.getElementById('ed-date').innerText = eventObj.date || 'No date set';
-      document.getElementById('ed-address').innerText = eventObj.address || clientProfile.address || 'No address provided';
-      document.getElementById('ed-phone').innerText = eventObj.phone || clientProfile.phone || 'No phone provided';
-      document.getElementById('ed-email').innerText = eventObj.email || clientProfile.email || 'No email provided';
-
-      document.getElementById('event-details-modal').style.display = 'flex';
-    }
-
-    function closeEventDetailsModal() {
-      document.getElementById('event-details-modal').style.display = 'none';
-      selectedEventIdForDetails = null;
-      selectedClientNameForDetails = null;
-    }
-
-    function deleteEventFromDetails() {
-      if (!selectedEventIdForDetails) return;
-      if (confirm("Are you sure you want to remove this shoot from your calendar?")) {
-        db.ref(`events/${selectedEventIdForDetails}`).remove();
-        closeEventDetailsModal();
-      }
-    }
-
-    function jumpToDirectoryFromBooking() {
-      if (!selectedClientNameForDetails) return;
-      closeEventDetailsModal();
-      openClientDirectoryFolder(selectedClientNameForDetails);
-    }
-
-    /* BASE64 FIREBASE GALLERY UPLOADER */
-    function triggerPhotoSelect() {
-      document.getElementById('file-upload-input').click();
-    }
-
-    function handleFileUpload(event) {
-      const files = event.target.files;
-      let dirName = document.getElementById('dir-client-input').value.trim();
-      if (!dirName) dirName = activeDirectory || "General";
-
-      const uploadBtn = document.getElementById('upload-btn');
-      uploadBtn.innerText = "⏳ Processing Images...";
-      uploadBtn.disabled = true;
-
-      Array.from(files).forEach(file => {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const base64String = e.target.result;
-          db.ref(`galleries/${dirName}`).push({
-            src: base64String,
-            name: file.name
-          });
-          uploadBtn.innerText = "📷 Upload Photos";
-          uploadBtn.disabled = false;
-        };
-        reader.readAsDataURL(file);
-      });
-
-      document.getElementById('dir-client-input').value = '';
-    }
-
-    function renderDirectories() {
-      const container = document.getElementById('directory-badges-list');
-      if (!container) return;
-      container.innerHTML = '';
-
-      Object.keys(appData.galleries).forEach(dir => {
-        const badge = document.createElement('div');
-        badge.className = `directory-badge ${dir === activeDirectory ? 'active' : ''}`;
-        badge.innerText = `${dir} (${appData.galleries[dir].length})`;
-        badge.onclick = () => {
-          activeDirectory = dir;
-          renderDirectories();
-          renderGallery();
-        };
-        container.appendChild(badge);
-      });
-    }
-
-    function renderGallery() {
-      const grid = document.getElementById('photo-grid-container');
-      if (!grid) return;
+    function renderPhotoDirectory() {
+      const folder = document.getElementById('photo-folder-select').value;
+      const grid = document.getElementById('admin-photo-grid');
       grid.innerHTML = '';
-      document.getElementById('active-dir-title').innerText = `Active Directory: ${activeDirectory}`;
+      const photos = appData.galleries[folder] || [];
 
-      const photos = appData.galleries[activeDirectory] || [];
       if (photos.length === 0) {
-        grid.innerHTML = `<p style="color: var(--text-sub); font-size: 0.88rem; grid-column: 1 / -1;">No photos in this directory yet. Upload photos above to build this album.</p>`;
+        grid.innerHTML = `<p style="grid-column: 1/-1;">No photos in this folder.</p>`;
         return;
       }
 
       photos.forEach(p => {
-        const card = document.createElement('div');
-        card.className = 'photo-card';
-        card.innerHTML = `
-          <img src="${p.src}" alt="Photo">
-          <div class="photo-actions">
-            <button class="photo-btn" onclick="openLightbox('${p.src}')">View</button>
-            <button class="photo-btn delete-btn" onclick="deletePhoto('${p.id}')">Delete</button>
+        grid.innerHTML += `
+          <div class="photo-card">
+            <img src="${p.src}" alt="Photo">
+            <div class="photo-actions"><span style="font-size: 0.8rem; color: var(--text-sub);">${p.name}</span></div>
           </div>
         `;
-        grid.appendChild(card);
       });
     }
 
-    function deletePhoto(id) {
-      if (confirm("Delete this photo permanently?")) {
-        db.ref(`galleries/${activeDirectory}/${id}`).remove();
-      }
-    }
-
-    function deleteActiveDirectory() {
-      if (activeDirectory === "General") {
-        alert("Cannot delete default General directory.");
-        return;
-      }
-      if (confirm(`Are you sure you want to delete directory '${activeDirectory}' and all its photos?`)) {
-        db.ref(`galleries/${activeDirectory}`).remove();
-        activeDirectory = "General";
-      }
-    }
-
-    function openLightbox(src) {
-      document.getElementById('lightbox-img').src = src;
-      document.getElementById('lightbox').style.display = 'flex';
-    }
-
-    function closeLightbox() {
-      document.getElementById('lightbox').style.display = 'none';
-    }
-
-    /* QUICK CLIENT NOTES */
-    function renderNotes() {
-      const container = document.getElementById('notes-container');
-      if (!container) return;
-      container.innerHTML = '';
-
-      if (!appData.notes || appData.notes.length === 0) {
-        container.innerHTML = `<p style="color: var(--text-sub); font-size: 0.88rem;">No client notes recorded yet.</p>`;
-        return;
-      }
-
-      appData.notes.forEach(n => {
-        const item = document.createElement('div');
-        item.className = 'note-item';
-        item.style.cssText = "display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border);";
-        item.innerHTML = `
-          <span style="font-size: 0.88rem; color: var(--text-main);">${n.text}</span>
-          <button class="sm-btn" style="color: var(--danger); border-color: rgba(239, 68, 68, 0.3); padding: 2px 6px; font-size: 0.75rem;" onclick="deleteClientNote('${n.id}')">Delete</button>
-        `;
-        container.appendChild(item);
-      });
-    }
-
-    function addClientNote() {
-      const input = document.getElementById('note-input');
-      const text = input.value.trim();
-      if (!text) return;
-
-      db.ref('notes').push({ text: text });
-      input.value = '';
-    }
-
-    function deleteClientNote(id) {
-      db.ref(`notes/${id}`).remove();
-    }
-
-    /* INVOICE CALCULATIONS */
-    function calculateInvoiceTotals() {
-      const amt1 = parseFloat(document.getElementById('inv-amt-1').value) || 0;
-      const amt2 = parseFloat(document.getElementById('inv-amt-2').value) || 0;
-      const subtotal = amt1 + amt2;
-
-      document.getElementById('inv-subtotal').innerText = subtotal.toFixed(2);
-      document.getElementById('inv-total').innerText = subtotal.toFixed(2);
-    }
-
-    /* SIGNATURE CANVAS LOGIC */
-    let canvas, ctx;
-    let isDrawing = false;
-    let canvasInitialized = false;
-
-    function initSignatureCanvas() {
-      canvas = document.getElementById('sig-canvas');
-      if (!canvas) return;
-
-      const rect = canvas.getBoundingClientRect();
-      if (rect.width > 0) {
-        canvas.width = rect.width;
-        canvas.height = 140;
-      } else {
-        canvas.width = 600;
-        canvas.height = 140;
-      }
-
-      ctx = canvas.getContext('2d');
-      ctx.lineWidth = 2;
-      ctx.lineCap = 'round';
-      ctx.strokeStyle = '#000000';
-
-      if (canvasInitialized) return;
-      canvasInitialized = true;
-
-      canvas.addEventListener('mousedown', startDrawing);
-      canvas.addEventListener('mousemove', draw);
-      window.addEventListener('mouseup', stopDrawing);
-
-      canvas.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        const touch = e.touches[0];
-        startDrawing({ clientX: touch.clientX, clientY: touch.clientY });
-      }, { passive: false });
-
-      canvas.addEventListener('touchmove', (e) => {
-        e.preventDefault();
-        const touch = e.touches[0];
-        draw({ clientX: touch.clientX, clientY: touch.clientY });
-      }, { passive: false });
-
-      canvas.addEventListener('touchend', stopDrawing);
-    }
-
-    function getPos(e) {
-      const rect = canvas.getBoundingClientRect();
-      return {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top
-      };
-    }
-
-    function startDrawing(e) {
-      isDrawing = true;
-      const pos = getPos(e);
-      ctx.beginPath();
-      ctx.moveTo(pos.x, pos.y);
-    }
-
-    function draw(e) {
-      if (!isDrawing) return;
-      const pos = getPos(e);
-      ctx.lineTo(pos.x, pos.y);
-      ctx.stroke();
-    }
-
-    function stopDrawing() {
-      isDrawing = false;
-    }
-
-    function clearSignature() {
-      if (ctx && canvas) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-      }
-    }
+    // Initialize Dashboard counts on load
+    updateDashboardMetrics();
   </script>
 </body>
 </html>
