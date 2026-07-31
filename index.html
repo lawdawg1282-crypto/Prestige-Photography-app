@@ -8,6 +8,8 @@
   <!-- FIREBASE COMPAT SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+  <!-- JSBARCODE FOR SMALL PRINTABLE LABELS -->
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 
   <style>
     :root {
@@ -310,7 +312,7 @@
       color: white;
     }
 
-    /* CLIENT SPREADSHEET DIRECTORY */
+    /* CLIENT SPREADSHEET DIRECTORY & INVENTORY TRACKER */
     .sheet-wrapper {
       width: 100%;
       overflow-x: auto;
@@ -367,6 +369,7 @@
 
     .badge-blue { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
     .badge-green { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .badge-orange { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
 
     /* PACKAGE ESTIMATOR CARDS */
     .tier-option {
@@ -625,8 +628,43 @@
       border: 1px solid rgba(16, 185, 129, 0.2);
     }
 
+    /* PRINTABLE BARCODE LABEL STYLING */
+    #printable-barcode-label {
+      background: #fff;
+      color: #000;
+      width: 2.5in;
+      height: 1.25in;
+      padding: 8px;
+      border: 1px dashed #ccc;
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      margin: 0 auto;
+    }
+
+    #label-item-name {
+      font-size: 0.75rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+
+    #label-asset-num {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+    }
+
+    /* GENERAL PRINT STYLES */
     @media print {
-      sidebar, .section-header, .mobile-header, #lock-screen {
+      sidebar, .section-header, .mobile-header, #lock-screen, .modal-overlay {
         display: none !important;
       }
       main {
@@ -643,6 +681,29 @@
       .document-container {
         padding: 0;
         border: none;
+      }
+
+      /* ISOLATED PRINTING FOR SMALL BARCODE LABEL ONLY */
+      body.printing-barcode * {
+        visibility: hidden !important;
+      }
+      body.printing-barcode #printable-barcode-label,
+      body.printing-barcode #printable-barcode-label * {
+        visibility: visible !important;
+      }
+      body.printing-barcode #printable-barcode-label {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 2.25in;
+        height: 1.1in;
+        border: none;
+        padding: 4px;
+        margin: 0;
+        display: flex !important;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: center;
       }
     }
 
@@ -716,6 +777,7 @@
     <ul class="nav-list">
       <li class="nav-item active" onclick="switchTab('dashboard', this)">📊 Dashboard</li>
       <li class="nav-item" onclick="switchTab('client-directory', this)">👥 Client Directory</li>
+      <li class="nav-item" onclick="switchTab('inventory', this)">📦 Inventory Tracker</li>
       <li class="nav-item" onclick="switchTab('packages', this)">🏷️ Package Estimator</li>
       <li class="nav-item" onclick="switchTab('calendar', this)">📅 Booking Calendar</li>
       <li class="nav-item" onclick="switchTab('directory', this)">📁 Photo Directory</li>
@@ -805,7 +867,46 @@
       </div>
     </div>
 
-    <!-- SECTION 3: PACKAGE ESTIMATOR -->
+    <!-- SECTION 3: INVENTORY TRACKER & ASSET LEDGER (NEW) -->
+    <div id="inventory" class="content-section">
+      <div class="section-header">
+        <div>
+          <h1>Inventory & Equipment Tracker</h1>
+          <p style="font-size: 0.85rem; color: var(--text-sub);">Track photography equipment, generate printable barcodes, and manage asset availability.</p>
+        </div>
+        <button class="action-btn" onclick="openAddInventoryModal()">+ Add Inventory Item</button>
+      </div>
+
+      <!-- INVENTORY CONTROLS & SEARCH BAR -->
+      <div class="card" style="margin-bottom: 1.5rem;">
+        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 250px; position: relative;">
+            <input type="text" id="inventory-search-input" placeholder="🔍 Search inventory by Item Name, Asset Number, or Category..." oninput="renderInventorySheet()">
+          </div>
+          <button class="sm-btn" onclick="renderInventorySheet()">🔄 Refresh Ledger</button>
+        </div>
+      </div>
+
+      <!-- INVENTORY SPREADSHEET GRID VIEW -->
+      <div class="sheet-wrapper">
+        <table class="sheet-table">
+          <thead>
+            <tr>
+              <th style="width: 28%;">Name of the Item</th>
+              <th style="width: 18%;">Asset Number</th>
+              <th style="width: 22%;">Equipment Category</th>
+              <th style="width: 16%;">Current Status</th>
+              <th style="width: 16%;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="inventory-sheet-body">
+            <!-- Dynamic Inventory Rows -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SECTION 4: PACKAGE ESTIMATOR -->
     <div id="packages" class="content-section">
       <div class="section-header">
         <h1>Package & Service Estimator</h1>
@@ -881,7 +982,7 @@
       </div>
     </div>
 
-    <!-- SECTION 4: BOOKING CALENDAR -->
+    <!-- SECTION 5: BOOKING CALENDAR -->
     <div id="calendar" class="content-section">
       <div class="section-header">
         <div>
@@ -904,7 +1005,7 @@
       </div>
     </div>
 
-    <!-- SECTION 5: PHOTO DIRECTORY -->
+    <!-- SECTION 6: PHOTO DIRECTORY -->
     <div id="directory" class="content-section">
       <div class="section-header">
         <h1>Media Directory Manager</h1>
@@ -931,7 +1032,7 @@
       </div>
     </div>
 
-    <!-- SECTION 6: INVOICE GENERATOR -->
+    <!-- SECTION 7: INVOICE GENERATOR -->
     <div id="invoice" class="content-section">
       <div class="section-header">
         <div>
@@ -1010,7 +1111,7 @@
       </div>
     </div>
 
-    <!-- SECTION 7: PRINT RELEASE FORM -->
+    <!-- SECTION 8: PRINT RELEASE FORM -->
     <div id="contract" class="content-section">
       <div class="section-header">
         <div>
@@ -1090,7 +1191,67 @@
     </div>
   </div>
 
-  <!-- UPGRADED EVENT BOOKING MODAL (WITH FULL CLIENT AUTOCREATE / AUTOFILL) -->
+  <!-- ADD INVENTORY ITEM MODAL (NEW) -->
+  <div class="modal-overlay" id="inventory-modal">
+    <div class="modal-box">
+      <h3 style="margin-bottom: 1rem;">Add Inventory Item</h3>
+      <div class="form-group">
+        <label>Name of the Item</label>
+        <input type="text" id="inv-name" placeholder="e.g. Canon EOS R5 Mirrorless Body">
+      </div>
+      <div class="form-group">
+        <label>Asset Number / Serial Tag</label>
+        <input type="text" id="inv-asset" placeholder="e.g. AST-1042">
+      </div>
+      <div class="form-group">
+        <label>Equipment Category</label>
+        <select id="inv-category">
+          <option value="Camera Body">Camera Body</option>
+          <option value="Lens">Lens / Optics</option>
+          <option value="Lighting">Lighting / Strobe</option>
+          <option value="Audio">Audio / Microphones</option>
+          <option value="Accessories">Accessories & Support</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Current Status</label>
+        <select id="inv-status">
+          <option value="Available">Available</option>
+          <option value="In Use">In Use / On Shoot</option>
+          <option value="Maintenance">Maintenance / Repair</option>
+        </select>
+      </div>
+      <div style="display: flex; gap: 8px; margin-top: 1.5rem; justify-content: flex-end;">
+        <button class="sm-btn" onclick="closeAddInventoryModal()">Cancel</button>
+        <button class="action-btn" onclick="addInventoryEntry()">Save Item</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRINT SMALL BARCODE MODAL (NEW) -->
+  <div class="modal-overlay" id="barcode-print-modal">
+    <div class="modal-box" style="text-align: center; max-width: 400px;">
+      <h3 style="margin-bottom: 1rem;">Print Asset Barcode Label</h3>
+      
+      <!-- PRINTABLE SMALL LABEL AREA: TOP ITEM NAME | MIDDLE BARCODE | BOTTOM ASSET NUM -->
+      <div id="printable-barcode-label">
+        <div id="label-item-name">Canon EOS R5 Body</div>
+        <svg id="label-barcode-svg"></svg>
+        <div id="label-asset-num">AST-1042</div>
+      </div>
+
+      <p style="color: var(--text-sub); font-size: 0.78rem; margin-top: 1rem;">
+        Formatted for small thermal adhesive sticker printers (2.5" x 1.25").
+      </p>
+
+      <div style="display: flex; gap: 8px; margin-top: 1.5rem; justify-content: center;">
+        <button class="sm-btn" onclick="closeBarcodeModal()">Cancel</button>
+        <button class="action-btn" onclick="printBarcodeLabel()">🖨️ Print Label</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EVENT BOOKING MODAL -->
   <div class="modal-overlay" id="event-modal">
     <div class="modal-box">
       <h3 style="margin-bottom: 1rem;">Schedule Shoot & Sync Client</h3>
@@ -1203,6 +1364,7 @@
       notes: [],
       events: [],
       clients: [],
+      inventory: [],
       galleries: { "General": [] }
     };
     let activeDirectory = "General";
@@ -1250,6 +1412,17 @@
         renderClientSheet();
       });
 
+      // Sync Inventory Spreadsheet Ledger
+      db.ref('inventory').on('value', snapshot => {
+        appData.inventory = [];
+        if (snapshot.exists()) {
+          snapshot.forEach(child => {
+            appData.inventory.push({ id: child.key, ...child.val() });
+          });
+        }
+        renderInventorySheet();
+      });
+
       // Sync Calendar Events
       db.ref('events').on('value', snapshot => {
         appData.events = [];
@@ -1282,7 +1455,8 @@
       // Close autocomplete on click outside
       document.addEventListener('click', (e) => {
         if (!e.target.closest('#m-client') && !e.target.closest('#client-autocomplete-list')) {
-          document.getElementById('client-autocomplete-list').style.display = 'none';
+          const autoList = document.getElementById('client-autocomplete-list');
+          if (autoList) autoList.style.display = 'none';
         }
       });
     });
@@ -1349,7 +1523,8 @@
       document.querySelectorAll('.content-section').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
       
-      document.getElementById(tabId).classList.add('active');
+      const targetSec = document.getElementById(tabId);
+      if (targetSec) targetSec.classList.add('active');
       if (btn) btn.classList.add('active');
 
       if (window.innerWidth <= 991) {
@@ -1365,7 +1540,7 @@
       document.getElementById('sidebar-drawer').classList.toggle('open');
     }
 
-    /* CLIENT DIRECTORY SPREADSHEET ENGINE - FIXED FUZZY MATCHING */
+    /* CLIENT DIRECTORY SPREADSHEET ENGINE */
     function renderClientSheet() {
       const body = document.getElementById('client-sheet-body');
       if (!body) return;
@@ -1390,7 +1565,6 @@
         const cPhone = (c.phone || '').trim();
         const cEmail = (c.email || '').trim().toLowerCase();
 
-        // Robust matching: Check if trimmed Name, Phone, or Email matches any event
         const clientEvents = appData.events.filter(e => {
           const eName = (e.client || '').trim().toLowerCase();
           const ePhone = (e.phone || '').trim();
@@ -1403,7 +1577,6 @@
 
         clientEvents.sort((a, b) => new Date(a.date) - new Date(b.date));
         
-        // Match any upcoming shoot today or in the future
         const todayStr = new Date().toISOString().split('T')[0];
         const upcoming = clientEvents.find(e => e.date >= todayStr) || clientEvents[clientEvents.length - 1];
 
@@ -1489,6 +1662,149 @@
       switchTab('directory');
       renderDirectories();
       renderGallery();
+    }
+
+    /* INVENTORY TRACKER & ASSET LEDGER ENGINE (NEW) */
+    function renderInventorySheet() {
+      const body = document.getElementById('inventory-sheet-body');
+      if (!body) return;
+      body.innerHTML = '';
+
+      const searchVal = (document.getElementById('inventory-search-input')?.value || '').toLowerCase();
+
+      const filtered = appData.inventory.filter(item => {
+        return (item.name || '').toLowerCase().includes(searchVal) ||
+               (item.assetNumber || '').toLowerCase().includes(searchVal) ||
+               (item.category || '').toLowerCase().includes(searchVal) ||
+               (item.status || '').toLowerCase().includes(searchVal);
+      });
+
+      if (filtered.length === 0) {
+        body.innerHTML = `<tr><td colspan="5" style="text-align:center; color: var(--text-sub); padding: 1.5rem;">No equipment assets match your search query. Click "+ Add Inventory Item" above to create one.</td></tr>`;
+        return;
+      }
+
+      filtered.forEach(item => {
+        let badgeClass = 'badge-blue';
+        if (item.status === 'Available') badgeClass = 'badge-green';
+        if (item.status === 'Maintenance') badgeClass = 'badge-orange';
+
+        const statusBadge = `<span class="badge-pill ${badgeClass}">${item.status || 'Available'}</span>`;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>
+            <input type="text" class="sheet-input" value="${item.name || ''}" onchange="updateInventoryField('${item.id}', 'name', this.value)" style="font-weight:700;">
+          </td>
+          <td>
+            <input type="text" class="sheet-input" value="${item.assetNumber || ''}" onchange="updateInventoryField('${item.id}', 'assetNumber', this.value)" style="font-family: monospace; font-weight: 600; color: #60a5fa;">
+          </td>
+          <td>
+            <select class="sheet-input" onchange="updateInventoryField('${item.id}', 'category', this.value)">
+              <option value="Camera Body" ${item.category === 'Camera Body' ? 'selected' : ''}>Camera Body</option>
+              <option value="Lens" ${item.category === 'Lens' ? 'selected' : ''}>Lens / Optics</option>
+              <option value="Lighting" ${item.category === 'Lighting' ? 'selected' : ''}>Lighting / Strobe</option>
+              <option value="Audio" ${item.category === 'Audio' ? 'selected' : ''}>Audio / Microphones</option>
+              <option value="Accessories" ${item.category === 'Accessories' ? 'selected' : ''}>Accessories & Support</option>
+            </select>
+          </td>
+          <td style="text-align: center;">
+            <select class="sheet-input" style="width: auto;" onchange="updateInventoryField('${item.id}', 'status', this.value)">
+              <option value="Available" ${item.status === 'Available' ? 'selected' : ''}>● Available</option>
+              <option value="In Use" ${item.status === 'In Use' ? 'selected' : ''}>● In Use</option>
+              <option value="Maintenance" ${item.status === 'Maintenance' ? 'selected' : ''}>● Maintenance</option>
+            </select>
+          </td>
+          <td>
+            <div style="display:flex; gap:4px;">
+              <button class="sm-btn" onclick="openBarcodeModal('${encodeURIComponent(item.name || 'Equipment Asset')}', '${item.assetNumber || 'AST-0000'}')" title="Print Small Barcode Label">🏷️ Print Label</button>
+              <button class="sm-btn" onclick="deleteInventoryItem('${item.id}')" style="color:var(--danger);" title="Remove Item">✕</button>
+            </div>
+          </td>
+        `;
+        body.appendChild(tr);
+      });
+    }
+
+    function updateInventoryField(id, field, value) {
+      db.ref(`inventory/${id}/${field}`).set(value.trim());
+    }
+
+    function openAddInventoryModal() {
+      // Auto-generate next suggested asset number
+      const nextNum = appData.inventory.length + 1001;
+      document.getElementById('inv-asset').value = `AST-${nextNum}`;
+      document.getElementById('inventory-modal').style.display = 'flex';
+    }
+
+    function closeAddInventoryModal() {
+      document.getElementById('inventory-modal').style.display = 'none';
+      document.getElementById('inv-name').value = '';
+      document.getElementById('inv-asset').value = '';
+    }
+
+    function addInventoryEntry() {
+      const name = document.getElementById('inv-name').value.trim();
+      const assetNumber = document.getElementById('inv-asset').value.trim();
+      const category = document.getElementById('inv-category').value;
+      const status = document.getElementById('inv-status').value;
+
+      if (!name || !assetNumber) {
+        alert("Please provide both an Item Name and an Asset Number.");
+        return;
+      }
+
+      db.ref('inventory').push({
+        name: name,
+        assetNumber: assetNumber,
+        category: category,
+        status: status
+      });
+
+      closeAddInventoryModal();
+    }
+
+    function deleteInventoryItem(id) {
+      if (confirm("Are you sure you want to remove this item from your inventory ledger?")) {
+        db.ref(`inventory/${id}`).remove();
+      }
+    }
+
+    /* SMALL BARCODE PRINTING ENGINE (NEW) */
+    function openBarcodeModal(encodedName, assetNum) {
+      const name = decodeURIComponent(encodedName);
+      
+      // Update small label UI: Item Name at Top, Asset Number at Bottom
+      document.getElementById('label-item-name').innerText = name;
+      document.getElementById('label-asset-num').innerText = assetNum;
+
+      // Generate sharp Code128 Barcode in the Middle
+      try {
+        JsBarcode("#label-barcode-svg", assetNum, {
+          format: "CODE128",
+          width: 1.6,
+          height: 38,
+          displayValue: false,
+          margin: 4,
+          background: "#ffffff",
+          lineColor: "#000000"
+        });
+      } catch (err) {
+        console.error("Barcode generation error:", err);
+      }
+
+      document.getElementById('barcode-print-modal').style.display = 'flex';
+    }
+
+    function closeBarcodeModal() {
+      document.getElementById('barcode-print-modal').style.display = 'none';
+    }
+
+    function printBarcodeLabel() {
+      // Add custom class to body so @media print hides everything except #printable-barcode-label
+      document.body.classList.add('printing-barcode');
+      window.print();
+      document.body.classList.remove('printing-barcode');
     }
 
     /* PACKAGE ESTIMATOR & INVOICE ENGINE */
@@ -1719,7 +2035,6 @@
         return;
       }
 
-      // 1. Check if client exists (case and space insensitive check)
       const existingClient = appData.clients.find(c => (c.name || '').trim().toLowerCase() === client.toLowerCase());
       if (!existingClient) {
         db.ref('clients').push({
@@ -1729,13 +2044,11 @@
           email: email
         });
       } else {
-        // Backfill missing contact info
         if (address && !existingClient.address) db.ref(`clients/${existingClient.id}/address`).set(address);
         if (phone && !existingClient.phone) db.ref(`clients/${existingClient.id}/phone`).set(phone);
         if (email && !existingClient.email) db.ref(`clients/${existingClient.id}/email`).set(email);
       }
 
-      // 2. Save full rich event to Firebase
       db.ref('events').push({
         client: client,
         address: address,
@@ -1745,7 +2058,6 @@
         time: time
       });
 
-      // Autofill invoice and release names
       const invClient = document.getElementById('inv-client-name');
       const relClient = document.getElementById('rel-client-name');
       if (invClient && !invClient.value) invClient.value = client;
