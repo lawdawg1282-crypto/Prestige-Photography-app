@@ -8,8 +8,6 @@
   <!-- FIREBASE COMPAT SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-  <!-- JSBARCODE FOR SMALL PRINTABLE LABELS -->
-  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 
   <style>
     :root {
@@ -722,80 +720,36 @@
       border: 1px solid rgba(16, 185, 129, 0.2);
     }
 
-    /* PRINTABLE BARCODE LABEL STYLING */
-    #printable-barcode-label {
-      background: #fff;
-      color: #000;
-      width: 2.5in;
-      height: 1.25in;
-      padding: 8px;
-      border: 1px dashed #ccc;
-      border-radius: 4px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      align-items: center;
-      margin: 0 auto;
-    }
-
-    #label-item-name {
-      font-size: 0.75rem;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      text-align: center;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 100%;
-    }
-
-    #label-asset-num {
-      font-size: 0.7rem;
-      font-weight: 700;
-      letter-spacing: 1.5px;
-    }
-
-    /* GENERAL PRINT STYLES */
+    /* GENERAL PRINT STYLES - FIXED FOR INVOICE & PRINT RELEASE */
     @media print {
       body * {
         visibility: hidden !important;
       }
-      #barcode-print-modal, #printable-barcode-label, #printable-barcode-label * {
+      #invoice.active *, #invoice.active, #contract.active *, #contract.active {
         visibility: visible !important;
       }
-      #barcode-print-modal {
-        position: fixed;
-        inset: 0;
-        background: white !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        z-index: 99999;
-      }
-      #barcode-print-modal .modal-box {
-        border: none !important;
-        background: white !important;
-        box-shadow: none !important;
+      #invoice.active, #contract.active {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        margin: 0 !important;
         padding: 0 !important;
+        background: white !important;
+        color: black !important;
       }
-      #barcode-print-modal h3, #barcode-print-modal p, #barcode-print-modal button {
+      #invoice .section-header button, #contract .section-header button {
         display: none !important;
       }
-      #printable-barcode-label {
-        position: absolute;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
-        width: 2.25in;
-        height: 1.1in;
+      .document-container {
         border: none !important;
-        padding: 4px;
-        margin: 0;
-        display: flex !important;
-        flex-direction: column;
-        justify-content: space-between;
-        align-items: center;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: white !important;
+        color: black !important;
+      }
+      input.doc-input-inline, select.doc-input-inline {
+        border-bottom: none !important;
       }
     }
 
@@ -1012,11 +966,10 @@
         <table class="sheet-table">
           <thead>
             <tr>
-              <th style="width: 28%;">Name of the Item</th>
-              <th style="width: 18%;">Asset Number</th>
-              <th style="width: 22%;">Equipment Category</th>
-              <th style="width: 16%;">Current Status</th>
-              <th style="width: 16%;">Actions</th>
+              <th style="width: 34%;">Name of the Item</th>
+              <th style="width: 20%;">Asset Number</th>
+              <th style="width: 24%;">Equipment Category</th>
+              <th style="width: 22%;">Current Status</th>
             </tr>
           </thead>
           <tbody id="inventory-sheet-body">
@@ -1368,29 +1321,6 @@
       <div style="display: flex; gap: 8px; margin-top: 1rem; justify-content: flex-end;">
         <button class="sm-btn" onclick="closeCameraScannerModal()">Close</button>
         <button class="action-btn" onclick="executeAssetScan()">Find Asset</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- PRINT SMALL BARCODE MODAL -->
-  <div class="modal-overlay" id="barcode-print-modal">
-    <div class="modal-box" style="text-align: center; max-width: 400px;">
-      <h3 style="margin-bottom: 1rem;">Print Asset Barcode Label</h3>
-      
-      <!-- PRINTABLE SMALL LABEL AREA -->
-      <div id="printable-barcode-label">
-        <div id="label-item-name">Canon EOS R5 Body</div>
-        <svg id="label-barcode-svg"></svg>
-        <div id="label-asset-num">AST-1042</div>
-      </div>
-
-      <p style="color: var(--text-sub); font-size: 0.78rem; margin-top: 1rem;">
-        Formatted for small thermal adhesive sticker printers (2.5" x 1.25").
-      </p>
-
-      <div style="display: flex; gap: 8px; margin-top: 1.5rem; justify-content: center;">
-        <button class="sm-btn" onclick="closeBarcodeModal()">Cancel</button>
-        <button class="action-btn" onclick="printBarcodeLabel()">🖨️ Print Label</button>
       </div>
     </div>
   </div>
@@ -1826,17 +1756,11 @@
       });
 
       if (filtered.length === 0) {
-        body.innerHTML = `<tr><td colspan="5" style="text-align:center; color: var(--text-sub); padding: 1.5rem;">No equipment assets match your search query. Click "+ Add Inventory Item" above to create one.</td></tr>`;
+        body.innerHTML = `<tr><td colspan="4" style="text-align:center; color: var(--text-sub); padding: 1.5rem;">No equipment assets match your search query. Click "+ Add Inventory Item" above to create one.</td></tr>`;
         return;
       }
 
       filtered.forEach(item => {
-        let badgeClass = 'badge-blue';
-        if (item.status === 'Available') badgeClass = 'badge-green';
-        if (item.status === 'Maintenance') badgeClass = 'badge-orange';
-
-        const statusBadge = `<span class="badge-pill ${badgeClass}">${item.status || 'Available'}</span>`;
-
         const tr = document.createElement('tr');
         tr.id = `inv-row-${item.assetNumber}`;
         tr.innerHTML = `
@@ -1862,12 +1786,6 @@
               <option value="In Use" ${item.status === 'In Use' ? 'selected' : ''}>● In Use</option>
               <option value="Maintenance" ${item.status === 'Maintenance' ? 'selected' : ''}>● Maintenance</option>
             </select>
-          </td>
-          <td>
-            <div style="display:flex; gap:4px;">
-              <button class="sm-btn" onclick="openBarcodeModal('${encodeURIComponent(item.name || 'Equipment Asset')}', '${item.assetNumber || 'AST-0000'}')" title="Print Small Barcode Label">🏷️ Print Label</button>
-              <button class="sm-btn" onclick="deleteInventoryItem('${item.id}')" style="color:var(--danger);" title="Remove Item">✕</button>
-            </div>
           </td>
         `;
         body.appendChild(tr);
@@ -1911,13 +1829,7 @@
       closeAddInventoryModal();
     }
 
-    function deleteInventoryItem(id) {
-      if (confirm("Are you sure you want to remove this item from your inventory ledger?")) {
-        db.ref(`inventory/${id}`).remove();
-      }
-    }
-
-    /* TABLET CAMERA BARCODER SCANNER */
+    /* TABLET CAMERA BARCODE SCANNER */
     function openCameraScannerModal() {
       document.getElementById('camera-scanner-modal').style.display = 'flex';
       document.getElementById('scanned-code-input').value = '';
@@ -1951,14 +1863,12 @@
       closeCameraScannerModal();
       switchTab('inventory');
 
-      // Populate search filter
       const searchInput = document.getElementById('inventory-search-input');
       if (searchInput) {
         searchInput.value = code;
         renderInventorySheet();
       }
 
-      // Highlight target row if found
       setTimeout(() => {
         const found = appData.inventory.find(i => (i.assetNumber || '').toLowerCase() === code.toLowerCase() || (i.name || '').toLowerCase().includes(code.toLowerCase()));
         if (found) {
@@ -1972,38 +1882,6 @@
           alert(`Asset code '${code}' not found in inventory.`);
         }
       }, 150);
-    }
-
-    /* SMALL BARCODE PRINTING ENGINE */
-    function openBarcodeModal(encodedName, assetNum) {
-      const name = decodeURIComponent(encodedName);
-      
-      document.getElementById('label-item-name').innerText = name;
-      document.getElementById('label-asset-num').innerText = assetNum;
-
-      try {
-        JsBarcode("#label-barcode-svg", assetNum, {
-          format: "CODE128",
-          width: 1.6,
-          height: 38,
-          displayValue: false,
-          margin: 4,
-          background: "#ffffff",
-          lineColor: "#000000"
-        });
-      } catch (err) {
-        console.error("Barcode generation error:", err);
-      }
-
-      document.getElementById('barcode-print-modal').style.display = 'flex';
-    }
-
-    function closeBarcodeModal() {
-      document.getElementById('barcode-print-modal').style.display = 'none';
-    }
-
-    function printBarcodeLabel() {
-      window.print();
     }
 
     /* PACKAGE ESTIMATOR & INVOICE ENGINE */
@@ -2416,7 +2294,6 @@
       let notesList = appData.notes || [];
       if (badge) badge.innerText = `${notesList.length} Note${notesList.length === 1 ? '' : 's'}`;
 
-      // Filter notes based on active chip
       if (currentNoteFilter === "PINNED") {
         notesList = notesList.filter(n => n.pinned === true);
       } else if (currentNoteFilter !== "ALL") {
@@ -2428,7 +2305,6 @@
         return;
       }
 
-      // Sort: pinned notes first, then newest timestamps first
       notesList.sort((a, b) => {
         if (a.pinned && !b.pinned) return -1;
         if (!a.pinned && b.pinned) return 1;
