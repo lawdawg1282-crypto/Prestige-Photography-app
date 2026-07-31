@@ -664,40 +664,38 @@
 
     /* GENERAL PRINT STYLES */
     @media print {
-      sidebar, .section-header, .mobile-header, #lock-screen, .modal-overlay {
-        display: none !important;
-      }
-      main {
-        padding: 0;
-        height: auto;
-        overflow: visible;
-      }
-      .content-section {
-        display: none !important;
-      }
-      .content-section.active {
-        display: block !important;
-      }
-      .document-container {
-        padding: 0;
-        border: none;
-      }
-
-      /* ISOLATED PRINTING FOR SMALL BARCODE LABEL ONLY */
-      body.printing-barcode * {
+      body * {
         visibility: hidden !important;
       }
-      body.printing-barcode #printable-barcode-label,
-      body.printing-barcode #printable-barcode-label * {
+      #barcode-print-modal, #printable-barcode-label, #printable-barcode-label * {
         visibility: visible !important;
       }
-      body.printing-barcode #printable-barcode-label {
+      #barcode-print-modal {
+        position: fixed;
+        inset: 0;
+        background: white !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        z-index: 99999;
+      }
+      #barcode-print-modal .modal-box {
+        border: none !important;
+        background: white !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+      }
+      #barcode-print-modal h3, #barcode-print-modal p, #barcode-print-modal button {
+        display: none !important;
+      }
+      #printable-barcode-label {
         position: absolute;
-        left: 0;
-        top: 0;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
         width: 2.25in;
         height: 1.1in;
-        border: none;
+        border: none !important;
         padding: 4px;
         margin: 0;
         display: flex !important;
@@ -867,14 +865,17 @@
       </div>
     </div>
 
-    <!-- SECTION 3: INVENTORY TRACKER & ASSET LEDGER (NEW) -->
+    <!-- SECTION 3: INVENTORY TRACKER & ASSET LEDGER -->
     <div id="inventory" class="content-section">
       <div class="section-header">
         <div>
           <h1>Inventory & Equipment Tracker</h1>
-          <p style="font-size: 0.85rem; color: var(--text-sub);">Track photography equipment, generate printable barcodes, and manage asset availability.</p>
+          <p style="font-size: 0.85rem; color: var(--text-sub);">Track photography equipment, scan barcodes via tablet camera, and manage asset availability.</p>
         </div>
-        <button class="action-btn" onclick="openAddInventoryModal()">+ Add Inventory Item</button>
+        <div style="display: flex; gap: 8px;">
+          <button class="action-btn" style="background: var(--card-bg); border: 1px solid var(--border);" onclick="openCameraScannerModal()">📷 Scan Barcode</button>
+          <button class="action-btn" onclick="openAddInventoryModal()">+ Add Inventory Item</button>
+        </div>
       </div>
 
       <!-- INVENTORY CONTROLS & SEARCH BAR -->
@@ -1191,7 +1192,7 @@
     </div>
   </div>
 
-  <!-- ADD INVENTORY ITEM MODAL (NEW) -->
+  <!-- ADD INVENTORY ITEM MODAL -->
   <div class="modal-overlay" id="inventory-modal">
     <div class="modal-box">
       <h3 style="margin-bottom: 1rem;">Add Inventory Item</h3>
@@ -1208,6 +1209,7 @@
         <select id="inv-category">
           <option value="Camera Body">Camera Body</option>
           <option value="Lens">Lens / Optics</option>
+          <option value="Electronic">Electronic / Drones</option>
           <option value="Lighting">Lighting / Strobe</option>
           <option value="Audio">Audio / Microphones</option>
           <option value="Accessories">Accessories & Support</option>
@@ -1228,12 +1230,35 @@
     </div>
   </div>
 
-  <!-- PRINT SMALL BARCODE MODAL (NEW) -->
+  <!-- CAMERA BARCODE SCANNER MODAL -->
+  <div class="modal-overlay" id="camera-scanner-modal">
+    <div class="modal-box" style="text-align: center; max-width: 440px;">
+      <h3 style="margin-bottom: 0.5rem;">Tablet Camera Barcode Scanner</h3>
+      <p style="color: var(--text-sub); font-size: 0.8rem; margin-bottom: 1rem;">Position barcode in frame or type/scan asset code directly below.</p>
+      
+      <div style="position: relative; background: #000; border-radius: 8px; overflow: hidden; height: 180px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border);">
+        <video id="scanner-video" autoplay playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
+        <div style="position: absolute; border: 2px dashed var(--accent); width: 80%; height: 60px; border-radius: 4px; pointer-events: none;"></div>
+      </div>
+
+      <div class="form-group" style="margin-top: 1rem; text-align: left;">
+        <label>Scanned Asset Tag / Input Code</label>
+        <input type="text" id="scanned-code-input" placeholder="e.g. AST-1042" onkeydown="if(event.key==='Enter') executeAssetScan()">
+      </div>
+
+      <div style="display: flex; gap: 8px; margin-top: 1rem; justify-content: flex-end;">
+        <button class="sm-btn" onclick="closeCameraScannerModal()">Close</button>
+        <button class="action-btn" onclick="executeAssetScan()">Find Asset</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRINT SMALL BARCODE MODAL -->
   <div class="modal-overlay" id="barcode-print-modal">
     <div class="modal-box" style="text-align: center; max-width: 400px;">
       <h3 style="margin-bottom: 1rem;">Print Asset Barcode Label</h3>
       
-      <!-- PRINTABLE SMALL LABEL AREA: TOP ITEM NAME | MIDDLE BARCODE | BOTTOM ASSET NUM -->
+      <!-- PRINTABLE SMALL LABEL AREA -->
       <div id="printable-barcode-label">
         <div id="label-item-name">Canon EOS R5 Body</div>
         <svg id="label-barcode-svg"></svg>
@@ -1372,6 +1397,7 @@
     let calYear = new Date().getFullYear();
     let selectedEventIdForDetails = null;
     let selectedClientNameForDetails = null;
+    let mediaStream = null;
 
     /* 3. FIREBASE REAL-TIME LISTENERS */
     window.addEventListener('DOMContentLoaded', () => {
@@ -1664,7 +1690,7 @@
       renderGallery();
     }
 
-    /* INVENTORY TRACKER & ASSET LEDGER ENGINE (NEW) */
+    /* INVENTORY TRACKER & ASSET LEDGER ENGINE */
     function renderInventorySheet() {
       const body = document.getElementById('inventory-sheet-body');
       if (!body) return;
@@ -1692,6 +1718,7 @@
         const statusBadge = `<span class="badge-pill ${badgeClass}">${item.status || 'Available'}</span>`;
 
         const tr = document.createElement('tr');
+        tr.id = `inv-row-${item.assetNumber}`;
         tr.innerHTML = `
           <td>
             <input type="text" class="sheet-input" value="${item.name || ''}" onchange="updateInventoryField('${item.id}', 'name', this.value)" style="font-weight:700;">
@@ -1703,6 +1730,7 @@
             <select class="sheet-input" onchange="updateInventoryField('${item.id}', 'category', this.value)">
               <option value="Camera Body" ${item.category === 'Camera Body' ? 'selected' : ''}>Camera Body</option>
               <option value="Lens" ${item.category === 'Lens' ? 'selected' : ''}>Lens / Optics</option>
+              <option value="Electronic" ${item.category === 'Electronic' ? 'selected' : ''}>Electronic / Drones</option>
               <option value="Lighting" ${item.category === 'Lighting' ? 'selected' : ''}>Lighting / Strobe</option>
               <option value="Audio" ${item.category === 'Audio' ? 'selected' : ''}>Audio / Microphones</option>
               <option value="Accessories" ${item.category === 'Accessories' ? 'selected' : ''}>Accessories & Support</option>
@@ -1731,7 +1759,6 @@
     }
 
     function openAddInventoryModal() {
-      // Auto-generate next suggested asset number
       const nextNum = appData.inventory.length + 1001;
       document.getElementById('inv-asset').value = `AST-${nextNum}`;
       document.getElementById('inventory-modal').style.display = 'flex';
@@ -1770,15 +1797,70 @@
       }
     }
 
-    /* SMALL BARCODE PRINTING ENGINE (NEW) */
+    /* TABLET CAMERA BARCODER SCANNER */
+    function openCameraScannerModal() {
+      document.getElementById('camera-scanner-modal').style.display = 'flex';
+      document.getElementById('scanned-code-input').value = '';
+      
+      const videoElement = document.getElementById('scanner-video');
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+        .then(stream => {
+          mediaStream = stream;
+          videoElement.srcObject = stream;
+        })
+        .catch(err => {
+          console.warn("Camera access unavailable or denied:", err);
+        });
+    }
+
+    function closeCameraScannerModal() {
+      if (mediaStream) {
+        mediaStream.getTracks().forEach(track => track.stop());
+        mediaStream = null;
+      }
+      document.getElementById('camera-scanner-modal').style.display = 'none';
+    }
+
+    function executeAssetScan() {
+      const code = document.getElementById('scanned-code-input').value.trim();
+      if (!code) {
+        alert("Please scan or enter an asset code.");
+        return;
+      }
+
+      closeCameraScannerModal();
+      switchTab('inventory');
+
+      // Populate search filter
+      const searchInput = document.getElementById('inventory-search-input');
+      if (searchInput) {
+        searchInput.value = code;
+        renderInventorySheet();
+      }
+
+      // Highlight target row if found
+      setTimeout(() => {
+        const found = appData.inventory.find(i => (i.assetNumber || '').toLowerCase() === code.toLowerCase() || (i.name || '').toLowerCase().includes(code.toLowerCase()));
+        if (found) {
+          const row = document.getElementById(`inv-row-${found.assetNumber}`);
+          if (row) {
+            row.style.background = 'rgba(59, 130, 246, 0.25)';
+            row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => { row.style.background = ''; }, 3000);
+          }
+        } else {
+          alert(`Asset code '${code}' not found in inventory.`);
+        }
+      }, 150);
+    }
+
+    /* SMALL BARCODE PRINTING ENGINE */
     function openBarcodeModal(encodedName, assetNum) {
       const name = decodeURIComponent(encodedName);
       
-      // Update small label UI: Item Name at Top, Asset Number at Bottom
       document.getElementById('label-item-name').innerText = name;
       document.getElementById('label-asset-num').innerText = assetNum;
 
-      // Generate sharp Code128 Barcode in the Middle
       try {
         JsBarcode("#label-barcode-svg", assetNum, {
           format: "CODE128",
@@ -1801,10 +1883,7 @@
     }
 
     function printBarcodeLabel() {
-      // Add custom class to body so @media print hides everything except #printable-barcode-label
-      document.body.classList.add('printing-barcode');
       window.print();
-      document.body.classList.remove('printing-barcode');
     }
 
     /* PACKAGE ESTIMATOR & INVOICE ENGINE */
