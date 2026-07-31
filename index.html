@@ -22,8 +22,8 @@
 
     header { background: var(--card-bg); border-bottom: 1px solid var(--border); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
     header h1 { font-size: 1.25rem; font-weight: 600; }
-    .nav-links { display: flex; gap: 1rem; }
-    .nav-btn { background: transparent; border: none; color: var(--text-sub); cursor: pointer; font-size: 0.9rem; padding: 0.5rem 0.75rem; border-radius: 6px; transition: 0.2s; }
+    .nav-links { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .nav-btn { background: transparent; border: none; color: var(--text-sub); cursor: pointer; font-size: 0.85rem; padding: 0.5rem 0.75rem; border-radius: 6px; transition: 0.2s; }
     .nav-btn:hover, .nav-btn.active { background: var(--border); color: var(--text); }
 
     main { padding: 2rem; max-width: 1400px; margin: 0 auto; width: 100%; flex: 1; }
@@ -32,7 +32,7 @@
 
     .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; }
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-    .grid-3 { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
+    .grid-3 { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
 
     h2 { font-size: 1.2rem; margin-bottom: 1rem; font-weight: 600; }
     p { color: var(--text-sub); font-size: 0.9rem; margin-bottom: 1rem; }
@@ -40,7 +40,7 @@
     .form-group { margin-bottom: 1rem; }
     label { display: block; font-size: 0.85rem; color: var(--text-sub); margin-bottom: 0.4rem; }
     input, select, textarea { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem; color: var(--text); font-size: 0.9rem; }
-    input:focus, select:focus { outline: none; border-color: var(--accent); }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
 
     .action-btn { background: var(--accent); color: white; border: none; padding: 0.75rem 1.25rem; border-radius: 6px; font-weight: 500; cursor: pointer; transition: 0.2s; }
     .action-btn:hover { background: var(--accent-hover); }
@@ -50,7 +50,7 @@
     table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; }
     th, td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); }
     th { color: var(--text-sub); font-weight: 500; }
-    tr:hover { background: rgba(255,255,255,0.02); cursor: pointer; }
+    tr:hover { background: rgba(255,255,255,0.02); }
 
     .photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
     .photo-card { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
@@ -65,9 +65,9 @@
 </head>
 <body>
 
-  <header id="main-header">
-    <h1>Prestige Admin Portal</h1>
-    <nav class="nav-links" id="admin-nav">
+  <header>
+    <h1>Prestige Photography & Media</h1>
+    <nav class="nav-links">
       <button class="nav-btn active" onclick="switchView('dashboard')">Dashboard</button>
       <button class="nav-btn" onclick="switchView('clients')">Client Directory</button>
       <button class="nav-btn" onclick="switchView('calendar')">Booking Calendar</button>
@@ -75,7 +75,6 @@
       <button class="nav-btn" onclick="switchView('invoices')">Invoices</button>
       <button class="nav-btn" onclick="switchView('photos')">Photo Directory</button>
       <button class="nav-btn" onclick="switchView('printrelease')">Print Release</button>
-      <button class="nav-btn" onclick="switchToClientPortal()" style="border: 1px dashed var(--accent); color: var(--accent);">Client View &rarr;</button>
     </nav>
   </header>
 
@@ -93,7 +92,7 @@
           <h3 id="dash-booking-count" style="font-size: 1.8rem;">0</h3>
         </div>
         <div class="card">
-          <p>Active Portals Configured</p>
+          <p>Active Portal PINs</p>
           <h3 id="dash-portal-count" style="font-size: 1.8rem;">0</h3>
         </div>
       </div>
@@ -223,42 +222,6 @@
         <button class="action-btn" onclick="alert('Print release configured successfully for ' + document.getElementById('pr-client').value)">Issue Print Release</button>
       </div>
     </section>
-
-    <!-- PUBLIC CLIENT PORTAL VIEW -->
-    <section id="view-client-portal" class="view-section">
-      <div id="portal-login-card" class="card" style="max-width: 400px; margin: 4rem auto; text-align: center;">
-        <h2>Client Portal Access</h2>
-        <p>Enter your assigned 4-digit PIN to access your secure client portal.</p>
-        <div class="form-group" style="margin-top: 1.5rem;">
-          <input type="password" id="client-portal-pin" placeholder="Enter 4-Digit PIN" maxlength="4" style="text-align: center; font-size: 1.5rem; letter-spacing: 4px;">
-        </div>
-        <button class="action-btn" style="width: 100%; margin-top: 1rem;" onclick="clientPortalLogin()">Unlock Portal</button>
-        <div style="margin-top: 1.5rem;">
-          <button class="sm-btn" onclick="switchView('dashboard')">&larr; Return to Admin Panel</button>
-        </div>
-      </div>
-
-      <div id="portal-dashboard-card" style="display: none;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-          <h2 id="portal-welcome-header">Welcome, Client</h2>
-          <button class="sm-btn" onclick="clientPortalLogout()">Log Out</button>
-        </div>
-        <div class="grid-2">
-          <div class="card">
-            <h3>Your Scheduled Shoots</h3>
-            <div id="portal-client-events"></div>
-          </div>
-          <div class="card">
-            <h3>Your Invoices & Documents</h3>
-            <div id="portal-client-invoices"></div>
-          </div>
-        </div>
-        <div class="card">
-          <h3>Your Private Photo Directory</h3>
-          <div class="photo-grid" id="portal-client-photos"></div>
-        </div>
-      </div>
-    </section>
   </main>
 
   <!-- EDIT CLIENT PORTAL MODAL -->
@@ -307,8 +270,6 @@
       }
     };
 
-    let loggedInClient = null;
-
     // View Switching Controller
     function switchView(viewId) {
       document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
@@ -317,16 +278,18 @@
       const target = document.getElementById('view-' + viewId);
       if (target) target.classList.add('active');
 
+      // Highlight active nav button
+      const navButtons = document.querySelectorAll('.nav-btn');
+      navButtons.forEach(btn => {
+        if (btn.getAttribute('onclick').includes(viewId)) {
+          btn.classList.add('active');
+        }
+      });
+
       if (viewId === 'clients') renderClientDirectory();
       if (viewId === 'calendar') renderCalendarBookings();
       if (viewId === 'photos') populatePhotoFolders();
       if (viewId === 'dashboard') updateDashboardMetrics();
-    }
-
-    function switchToClientPortal() {
-      document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
-      document.getElementById('view-client-portal').classList.add('active');
-      document.getElementById('main-header').style.display = 'none'; // hide admin header in portal view
     }
 
     // Dashboard Metrics
@@ -343,7 +306,7 @@
       
       appData.clients.forEach((c, index) => {
         tbody.innerHTML += `
-          <tr onclick="openEditClientModal(${index})">
+          <tr onclick="openEditClientModal(${index})" style="cursor: pointer;">
             <td><strong>${c.name}</strong></td>
             <td>${c.phone || 'No Phone'}</td>
             <td><code>${c.accessCode || 'Not Set'}</code></td>
@@ -497,88 +460,6 @@
           </div>
         `;
       });
-    }
-
-    // Public Client Portal Logic
-    function clientPortalLogin() {
-      const pin = document.getElementById('client-portal-pin').value.trim();
-      const matchedClient = appData.clients.find(c => c.accessCode === pin);
-
-      if (!matchedClient) {
-        alert("Incorrect PIN code. Please verify your code.");
-        return;
-      }
-
-      loggedInClient = matchedClient;
-      document.getElementById('client-portal-pin').value = '';
-      document.getElementById('client-portal-login').style.display = 'none';
-      document.getElementById('client-portal-dashboard').style.display = 'block';
-      document.getElementById('portal-welcome-header').innerText = `Welcome, ${loggedInClient.name}`;
-
-      renderClientPortalData();
-    }
-
-    function clientPortalLogout() {
-      loggedInClient = null;
-      document.getElementById('client-portal-dashboard').style.display = 'none';
-      document.getElementById('client-portal-login').style.display = 'block';
-      document.getElementById('main-header').style.display = 'flex'; // restore admin header
-      switchView('dashboard');
-    }
-
-    function renderClientPortalData() {
-      // 1. Events
-      const eventsBox = document.getElementById('portal-client-events');
-      eventsBox.innerHTML = '';
-      const myEvents = appData.events.filter(e => e.name.toLowerCase() === loggedInClient.name.toLowerCase());
-      if (myEvents.length === 0) {
-        eventsBox.innerHTML = `<p>No upcoming shoots scheduled.</p>`;
-      } else {
-        myEvents.forEach(e => {
-          eventsBox.innerHTML += `
-            <div style="background: var(--bg); padding: 10px; border-radius: 6px; margin-bottom: 8px; border: 1px solid var(--border);">
-              <strong>📅 ${e.date}</strong>
-              <p style="margin: 2px 0 0 0; font-size: 0.8rem;">📍 ${e.address || 'Location TBD'}</p>
-            </div>
-          `;
-        });
-      }
-
-      // 2. Invoices
-      const invoicesBox = document.getElementById('portal-client-invoices');
-      invoicesBox.innerHTML = '';
-      const myInvoices = appData.invoices.filter(i => i.client.toLowerCase() === loggedInClient.name.toLowerCase());
-      if (myInvoices.length === 0) {
-        invoicesBox.innerHTML = `<p>No invoices on file.</p>`;
-      } else {
-        myInvoices.forEach(i => {
-          invoicesBox.innerHTML += `
-            <div style="background: var(--bg); padding: 10px; border-radius: 6px; margin-bottom: 8px; border: 1px solid var(--border);">
-              <strong>💰 $${i.amount}</strong>
-              <p style="margin: 2px 0 0 0; font-size: 0.8rem;">${i.desc || 'Services Rendered'}</p>
-            </div>
-          `;
-        });
-      }
-
-      // 3. Photos
-      const photoBox = document.getElementById('portal-client-photos');
-      photoBox.innerHTML = '';
-      const myPhotos = appData.galleries[loggedInClient.name] || [];
-      if (myPhotos.length === 0) {
-        photoBox.innerHTML = `<p style="grid-column: 1/-1;">Your photos are being processed.</p>`;
-      } else {
-        myPhotos.forEach(p => {
-          photoBox.innerHTML += `
-            <div class="photo-card">
-              <img src="${p.src}" alt="Photo">
-              <div class="photo-actions">
-                <a href="${p.src}" download="${p.name}" class="sm-btn" style="text-decoration:none; display:inline-block;">Download File</a>
-              </div>
-            </div>
-          `;
-        });
-      }
     }
 
     // Initialize Dashboard counts on load
